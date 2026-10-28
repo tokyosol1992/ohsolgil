@@ -3,11 +3,11 @@ import '../styles/global.css';
 
 // 헤더 메뉴 = 페이지의 대분류 섹션 (id와 동일). 스크롤 위치에 따라 현재 항목이 표시됨
 const menu = [
-  { id: 'about', label: '소개' },
-  { id: 'experience', label: '경력' },
-  { id: 'projects', label: '프로젝트' },
-  { id: 'docs', label: '문서' },
-  { id: 'contact', label: '연락처' },
+  { id: 'about', label: 'About' },
+  { id: 'experience', label: 'Experience' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'docs', label: 'Docs' },
+  { id: 'contact', label: 'Contact' },
 ];
 
 const about = [
@@ -55,12 +55,13 @@ const docs = [
       <div class="bar">
         <div class="pill">
           <a class="logo" href="#top">Oh SolGil<i>.</i></a>
-          <nav aria-label="섹션">
+          <span class="sep" aria-hidden="true">/</span>
+          <nav aria-label="Sections">
             <span class="nav-ind" aria-hidden="true"></span>
             {menu.map((m) => <a href={`#${m.id}`} data-spy={m.id}>{m.label}</a>)}
           </nav>
-          <a class="btn primary" href="#docs">이력서</a>
-          <button class="menu-btn" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
+          <a class="btn primary" href="#docs">Resume</a>
+          <button class="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
         </div>
         <div class="menu" id="menu" hidden>
           {menu.map((m, i) => <a href={`#${m.id}`} data-spy={m.id}><span>{m.label}</span><small>{String(i + 1).padStart(2, '0')}</small></a>)}

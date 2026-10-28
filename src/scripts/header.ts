@@ -51,7 +51,7 @@ export function initHeader() {
   function setMenu(open: boolean) {
     if (!btn || !menu) return;
     btn.setAttribute('aria-expanded', String(open));
-    btn.setAttribute('aria-label', open ? '메뉴 닫기' : '메뉴 열기');
+    btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
     menu.hidden = !open;
   }
   btn?.addEventListener('click', () => setMenu(btn.getAttribute('aria-expanded') !== 'true'));

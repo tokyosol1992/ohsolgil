@@ -30,7 +30,10 @@ header.is-scrolled .pill{border-color:rgba(255,255,255,.07);background-color:rgb
   -webkit-backdrop-filter:blur(20px) saturate(1.7) brightness(.85);backdrop-filter:blur(20px) saturate(1.7) brightness(.85)}
 .logo{font-weight:800;letter-spacing:-.02em}
 .logo i{color:var(--accent);font-style:normal}
-nav{position:relative;display:flex;gap:2px;margin-left:auto}
+/* reactbits처럼 로고 뒤에 `/` 구분선과 함께 메뉴가 바로 이어짐 (CTA만 오른쪽 끝) */
+.sep{color:var(--dim);font-weight:300;font-size:22px;line-height:1;margin-left:-6px}
+nav{position:relative;display:flex;gap:2px;margin-left:-6px}
+.pill>.btn{margin-left:auto}
 nav a{position:relative;z-index:1;font-size:14px;color:var(--muted);padding:6px 14px;border-radius:999px;transition:color .25s}
 nav a:hover,nav a.is-active{color:var(--fg)}
 /* 현재 섹션을 따라 미끄러지는 유리 하이라이트 */
@@ -56,7 +59,7 @@ nav a:hover,nav a.is-active{color:var(--fg)}
 .menu a small{font:500 11px var(--mono);color:var(--dim)}
 .menu a:hover,.menu a.is-active{background:rgba(255,255,255,.08)}
 .menu a.is-active small{color:var(--accent)}
-@media(max-width:720px){nav,.pill>.btn{display:none}.menu-btn{display:block;margin-left:auto}}
+@media(max-width:720px){nav,.sep,.pill>.btn{display:none}.menu-btn{display:block;margin-left:auto}}
 section{scroll-margin-top:96px}
 
 /* hero: 화면 전체 폭. 뒤에 마우스에 반응하는 닷 그리드 캔버스 */

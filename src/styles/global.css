@@ -21,21 +21,21 @@ header{position:fixed;top:12px;left:0;right:0;z-index:20;display:flex;justify-co
 .bar{position:relative;width:100%;max-width:1760px;transition:max-width .6s cubic-bezier(.22,1,.36,1)}
 header.is-scrolled .bar{max-width:var(--content)}
 .pill{display:flex;align-items:center;gap:20px;width:100%;padding:10px 12px 10px 20px;border-radius:999px;
-  border:1px solid transparent;background-color:rgba(255,255,255,0);box-shadow:inset 0 1px 0 rgba(255,255,255,0),0 12px 40px rgba(0,0,0,0);
+  border:1px solid transparent;background-color:rgba(9,9,11,0);box-shadow:inset 0 1px 0 rgba(255,255,255,0),0 12px 40px rgba(0,0,0,0);
   -webkit-backdrop-filter:blur(.1px);backdrop-filter:blur(.1px);
   transition:background-color .4s,border-color .4s,box-shadow .4s,-webkit-backdrop-filter .4s,backdrop-filter .4s}
 /* 유리: 뒤 콘텐츠가 번져 비치고(blur+saturate), 위쪽 가장자리에 빛 반사 */
-header.is-scrolled .pill{border-color:rgba(255,255,255,.11);background-color:rgba(255,255,255,.055);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(255,255,255,.04),0 12px 40px rgba(0,0,0,.35);
-  -webkit-backdrop-filter:blur(18px) saturate(1.9) brightness(1.08);backdrop-filter:blur(18px) saturate(1.9) brightness(1.08)}
+header.is-scrolled .pill{border-color:rgba(255,255,255,.07);background-color:rgba(9,9,11,.62);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 40px rgba(0,0,0,.45);
+  -webkit-backdrop-filter:blur(20px) saturate(1.7) brightness(.85);backdrop-filter:blur(20px) saturate(1.7) brightness(.85)}
 .logo{font-weight:800;letter-spacing:-.02em}
 .logo i{color:var(--accent);font-style:normal}
 nav{position:relative;display:flex;gap:2px;margin-left:auto}
 nav a{position:relative;z-index:1;font-size:14px;color:var(--muted);padding:6px 14px;border-radius:999px;transition:color .25s}
 nav a:hover,nav a.is-active{color:var(--fg)}
 /* 현재 섹션을 따라 미끄러지는 유리 하이라이트 */
-.nav-ind{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:999px;background:rgba(255,255,255,.1);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 1px 0 rgba(255,255,255,.18);opacity:0;pointer-events:none;
+.nav-ind{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:999px;background:rgba(255,255,255,.07);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),inset 0 1px 0 rgba(255,255,255,.1);opacity:0;pointer-events:none;
   transition:transform .5s cubic-bezier(.22,1,.36,1),width .5s cubic-bezier(.22,1,.36,1),opacity .3s}
 .nav-ind.on{opacity:1}
 .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;border-radius:999px;padding:10px 20px;border:1px solid var(--line);background:var(--surface);transition:transform .2s,border-color .2s}
@@ -43,13 +43,13 @@ nav a:hover,nav a.is-active{color:var(--fg)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .pill .btn{padding:8px 16px}
 /* 모바일 메뉴 */
-.menu-btn{display:none;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);cursor:pointer;position:relative;color:var(--fg)}
+.menu-btn{display:none;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);cursor:pointer;position:relative;color:var(--fg)}
 .menu-btn i{position:absolute;left:11px;right:11px;height:1.5px;background:currentColor;border-radius:2px;transition:transform .3s,top .3s}
 .menu-btn i:first-child{top:15px}.menu-btn i:last-child{top:21px}
 .menu-btn[aria-expanded="true"] i:first-child{top:18px;transform:rotate(45deg)}
 .menu-btn[aria-expanded="true"] i:last-child{top:18px;transform:rotate(-45deg)}
-.menu{position:absolute;top:calc(100% + 8px);left:0;right:0;display:grid;padding:8px;border-radius:24px;border:1px solid rgba(255,255,255,.12);
-  background-color:rgba(20,21,26,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 20px 50px rgba(0,0,0,.45);
+.menu{position:absolute;top:calc(100% + 8px);left:0;right:0;display:grid;padding:8px;border-radius:24px;border:1px solid rgba(255,255,255,.07);
+  background-color:rgba(9,9,11,.66);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 20px 50px rgba(0,0,0,.5);
   -webkit-backdrop-filter:blur(22px) saturate(1.9);backdrop-filter:blur(22px) saturate(1.9)}
 .menu[hidden]{display:none}
 .menu a{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:16px;font-weight:600;transition:background .2s}

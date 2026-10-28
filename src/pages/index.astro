@@ -42,7 +42,7 @@ const docs = [
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" />
   </head>
   <body>
-    <header>
+    <header id="site-header">
       <div class="pill">
         <a class="logo" href="#top">Oh SolGil<i>.</i></a>
         <nav>
@@ -52,8 +52,10 @@ const docs = [
       </div>
     </header>
 
-    <main class="wrap" id="top">
-      <div class="hero">
+    <main id="top">
+      <div class="hero-full" data-dots-host>
+        <canvas class="dots" aria-hidden="true"></canvas>
+      <div class="wrap hero">
         <span class="avail">프로젝트 · 협업 제안 환영</span>
         <h1>Oh SolGil</h1>
         <div class="role">Product Designer</div>
@@ -66,7 +68,9 @@ const docs = [
           <span><b>8년</b> 차</span><span><b>2016–2025</b> 작업 기록</span><span><b>{projects.length}개</b> 대표 프로젝트</span><span>서울</span>
         </div>
       </div>
+      </div>
 
+      <div class="wrap">
       <section id="about">
         <div class="sh"><h2>소개</h2><p>무엇을 잘하고, 어떻게 일하는지</p></div>
         <div class="grid3">
@@ -134,6 +138,13 @@ const docs = [
         <div class="wm">MoHo →</div>
       </a>
       <footer><span>© 2026 Oh SolGil</span><span>Seoul</span></footer>
+      </div>
     </main>
+    <script>
+      import { initHeader } from '../scripts/header';
+      import { initDotGrid } from '../scripts/dot-grid';
+      initHeader();
+      initDotGrid();
+    </script>
   </body>
 </html>

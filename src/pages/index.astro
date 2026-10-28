@@ -1,6 +1,15 @@
 ---
 import '../styles/global.css';
 
+// 헤더 메뉴 = 페이지의 대분류 섹션 (id와 동일). 스크롤 위치에 따라 현재 항목이 표시됨
+const menu = [
+  { id: 'about', label: '소개' },
+  { id: 'experience', label: '경력' },
+  { id: 'projects', label: '프로젝트' },
+  { id: 'docs', label: '문서' },
+  { id: 'contact', label: '연락처' },
+];
+
 const about = [
   { n: '01', title: '플랫폼 설계', text: '핵심 역량 문장이 들어갑니다. (직접 정리해 주시는 내용으로 채웁니다)' },
   { n: '02', title: '디자인 시스템', text: '핵심 역량 문장이 들어갑니다.' },
@@ -43,12 +52,19 @@ const docs = [
   </head>
   <body>
     <header id="site-header">
-      <div class="pill">
-        <a class="logo" href="#top">Oh SolGil<i>.</i></a>
-        <nav>
-          <a href="#about">소개</a><a href="#experience">경력</a><a href="#projects">프로젝트</a><a href="#docs">문서</a><a href="#contact">연락처</a>
-        </nav>
-        <a class="btn primary" href="#docs">이력서</a>
+      <div class="bar">
+        <div class="pill">
+          <a class="logo" href="#top">Oh SolGil<i>.</i></a>
+          <nav aria-label="섹션">
+            <span class="nav-ind" aria-hidden="true"></span>
+            {menu.map((m) => <a href={`#${m.id}`} data-spy={m.id}>{m.label}</a>)}
+          </nav>
+          <a class="btn primary" href="#docs">이력서</a>
+          <button class="menu-btn" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
+        </div>
+        <div class="menu" id="menu" hidden>
+          {menu.map((m, i) => <a href={`#${m.id}`} data-spy={m.id}><span>{m.label}</span><small>{String(i + 1).padStart(2, '0')}</small></a>)}
+        </div>
       </div>
     </header>
 

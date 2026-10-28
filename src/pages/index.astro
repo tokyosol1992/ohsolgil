@@ -1,6 +1,15 @@
 ---
 import '../styles/global.css';
 
+// 헤더 메뉴 = 페이지의 대분류 섹션 (id와 동일). 스크롤 위치에 따라 현재 항목이 표시됨
+const menu = [
+  { id: 'about', label: 'About' },
+  { id: 'experience', label: 'Experience' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'docs', label: 'Docs' },
+  { id: 'contact', label: 'Contact' },
+];
+
 const about = [
   { n: '01', title: '플랫폼 설계', text: '핵심 역량 문장이 들어갑니다. (직접 정리해 주시는 내용으로 채웁니다)' },
   { n: '02', title: '디자인 시스템', text: '핵심 역량 문장이 들어갑니다.' },
@@ -42,18 +51,28 @@ const docs = [
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" />
   </head>
   <body>
-    <header>
-      <div class="pill">
-        <a class="logo" href="#top">Oh SolGil<i>.</i></a>
-        <nav>
-          <a href="#about">소개</a><a href="#experience">경력</a><a href="#projects">프로젝트</a><a href="#docs">문서</a><a href="#contact">연락처</a>
-        </nav>
-        <a class="btn primary" href="#docs">이력서</a>
+    <header id="site-header">
+      <div class="bar">
+        <div class="pill">
+          <a class="logo" href="#top">Oh SolGil<i>.</i></a>
+          <span class="sep" aria-hidden="true">/</span>
+          <nav aria-label="Sections">
+            <span class="nav-ind" aria-hidden="true"></span>
+            {menu.map((m) => <a href={`#${m.id}`} data-spy={m.id}>{m.label}</a>)}
+          </nav>
+          <a class="btn primary" href="#docs">Resume</a>
+          <button class="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
+        </div>
+        <div class="menu" id="menu" hidden>
+          {menu.map((m, i) => <a href={`#${m.id}`} data-spy={m.id}><span>{m.label}</span><small>{String(i + 1).padStart(2, '0')}</small></a>)}
+        </div>
       </div>
     </header>
 
-    <main class="wrap" id="top">
-      <div class="hero">
+    <main id="top">
+      <div class="hero-full" data-dots-host>
+        <canvas class="dots" aria-hidden="true"></canvas>
+      <div class="wrap hero">
         <span class="avail">프로젝트 · 협업 제안 환영</span>
         <h1>Oh SolGil</h1>
         <div class="role">Product Designer</div>
@@ -66,9 +85,11 @@ const docs = [
           <span><b>8년</b> 차</span><span><b>2016–2025</b> 작업 기록</span><span><b>{projects.length}개</b> 대표 프로젝트</span><span>서울</span>
         </div>
       </div>
+      </div>
 
+      <div class="wrap">
       <section id="about">
-        <div class="sh"><h2>소개</h2><p>무엇을 잘하고, 어떻게 일하는지</p></div>
+        <div class="sh"><h2>About</h2><p>What I do well and how I work</p></div>
         <div class="grid3">
           {about.map((a) => (
             <div class="card"><div class="ic">{a.n}</div><h3>{a.title}</h3><p class="ph">{a.text}</p></div>
@@ -77,7 +98,7 @@ const docs = [
       </section>
 
       <section id="experience">
-        <div class="sh"><h2>경력</h2><p>2016 → 2025</p></div>
+        <div class="sh"><h2>Experience</h2><p>2016 → 2025</p></div>
         <div class="tl">
           {jobs.map((j) => (
             <div class="job">
@@ -93,7 +114,7 @@ const docs = [
       </section>
 
       <section id="projects">
-        <div class="sh"><h2>프로젝트</h2><p>Figma 포트폴리오 기준 대표작</p></div>
+        <div class="sh"><h2>Projects</h2><p>Selected work from my portfolio</p></div>
         <div class="projects">
           {projects.map((p) => (
             <div class="proj">
@@ -112,7 +133,7 @@ const docs = [
       </section>
 
       <section id="docs">
-        <div class="sh"><h2>문서</h2><p>내려받아 보실 수 있어요</p></div>
+        <div class="sh"><h2>Docs</h2><p>Available to download</p></div>
         <div class="docs">
           {docs.map((d) => (
             <a class="doc" href="#docs"><div class="fi">PDF</div><div><b>{d.title}</b><small>{d.sub}</small></div><span class="dl">↓</span></a>
@@ -121,7 +142,7 @@ const docs = [
       </section>
 
       <section id="contact">
-        <div class="sh"><h2>연락처</h2><p>편하게 연락 주세요</p></div>
+        <div class="sh"><h2>Contact</h2><p>Get in touch</p></div>
         <div class="contact">
           <div class="card"><span class="mono">Email</span><b class="ph">이메일 입력 예정</b></div>
           <a class="card" href="https://github.com/tokyosol1992"><span class="mono">GitHub</span><b>github.com/tokyosol1992</b></a>
@@ -134,6 +155,13 @@ const docs = [
         <div class="wm">MoHo →</div>
       </a>
       <footer><span>© 2026 Oh SolGil</span><span>Seoul</span></footer>
+      </div>
     </main>
+    <script>
+      import { initHeader } from '../scripts/header';
+      import { initDotGrid } from '../scripts/dot-grid';
+      initHeader();
+      initDotGrid();
+    </script>
   </body>
 </html>

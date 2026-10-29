@@ -25,3 +25,11 @@
 2. 포트폴리오·이력서 PDF를 `public/`에 넣고 문서 버튼 연결
 3. 프로젝트 상세 페이지 추가
 4. OG 이미지·파비콘, 커스텀 도메인 연결(사용자가 도메인 구매 후)
+
+## Figma 정리 작업 (2026-10-29 시작, 사용자 요청 — 작업 메모)
+- 원본: Sketch로 작업한 B2B 로그인·회원가입 화면(그로우포웍스), Figma로 연 파일 `1MW8hD1ayKZi6xZkfVDkqJ` (페이지 `로그인` node 0:678, 18개 화면). Figma 링크: https://www.figma.com/design/1MW8hD1ayKZi6xZkfVDkqJ/
+- **목표**: Sketch→Figma 호환 문제로 Figma에서 안 나오는 영역은 나오게, 필요 없는 영역은 삭제, 비어 보이는 곳은 주변 파일을 읽고 컬러로 채워서 **바로 쓸 수 있는 Figma 파일로 최신화**. 다 끝나면 디자인을 갈무리해 프로토타입 파일에 더 멋진 문서로 취합 → 그 뒤 홈페이지(ohsolgil)에 적용.
+- 진행 방식: 어려운 부분은 언제든 사용자에게 질문·요청. 이 대화에서 하나씩 바꿔 나감.
+- 환경: 클라우드에서 www.figma.com 파일 다운로드(curl)는 막힘 → 스크린샷은 `get_screenshot`의 `enableBase64Response: true`로 확인. 수정은 `use_figma`(Figma MCP).
+- 발견·조치: 툴팁 "마지막 단계에요 😄" 3곳(0:780, 0:818, 0:852)은 `NotoSansCJKkr` 누락 폰트라 글자가 안 보였음 → Pretendard Variable SemiBold로 교체·가운데 정렬 (완료). 파일 전체 폰트는 Pretendard Variable(Regular/Medium/SemiBold/Bold)
+- 남은 점검: 약관 팝업(0:745) 뒤 배경이 단색 회색(딤만 있고 아래 화면 없음), 일부 프레임 `fills visible:false`·벡터 변환 뒤집힘(Sketch 잔재), 다른 페이지(온보딩·비밀번호 찾기 등) 동일 증상 여부

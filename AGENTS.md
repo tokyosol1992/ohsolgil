@@ -4,7 +4,7 @@
 
 ## 브리핑 (2026-10-29 기준)
 - **전체 흐름**: ① Sketch→Figma 파일 정리(진행 중, 폴더 https://www.figma.com/files/folder/424251949 의 모든 파일) → ② 정리된 디자인을 갈무리·취합해 프로토타입 파일에 더 멋진 문서로 만들기 → ③ 이 포트폴리오 사이트(Oh SolGil)에 적용
-- **정리 끝난 Figma 파일 3개**: `0.시작하기_로그인 B2B`(oXAF…가 아닌 1MW8hD1ayKZi6xZkfVDkqJ), `1.피드 B2B`(oXAFdmcpKOnHG5b1Darl3f), `2.소셜_챌린지 B2B`(PcswMPIZmu9lkWEydlO0UA). 폴더에 남은 파일은 사용자가 **파일 링크를 하나씩** 주면 진행(도구로 폴더 목록은 못 읽음)
+- **정리 끝난 Figma 파일 3개**: `0.시작하기_로그인 B2B`(fileKey 1MW8hD1ayKZi6xZkfVDkqJ), `1.피드 B2B`(fileKey oXAFdmcpKOnHG5b1Darl3f), `2.소셜_챌린지 B2B`(fileKey PcswMPIZmu9lkWEydlO0UA). 폴더에 남은 파일은 사용자가 **파일 링크를 하나씩** 주면 진행(도구로 폴더 목록은 못 읽음)
 - **하는 일 체크리스트**: 누락 폰트→Pretendard Variable(파일마다 이름 변형 확인: `PretendardVariable` 등) · 슬라이스(점선) 삭제 · 색 빠진 아이콘 복구(흰 선/채움 꺼짐) · 아이콘·로고 마스터 배경색 제거 · **Sketch 마스크 모서리(예: 배너 16) 직접 적용** · 숨김/중복 레이어는 "숨김→화면 PNG 바이트 비교→같을 때만 삭제" · 정리 전후 대표 화면 렌더링 비교
 - **소통 규칙**: 노드 번호 말고 화면 이름으로 설명 / 승인 창이 너무 많이 뜨지 않게 호출을 묶고, 수정 전에 사용자 결정이 필요한 것(삭제 목록 등)은 먼저 보여주기 / 경력·성과는 지어내지 말기
 - **환경 메모**: Figma 스크린샷은 `get_screenshot`의 `enableBase64Response: true`로, 수정은 `use_figma`(세션 `create_session` 후). 권한 팝업을 줄이려면 모드 드롭다운을 Auto로. `.claude/settings.json`에 Figma·git 허용 규칙을 사용자가 직접 올려둠

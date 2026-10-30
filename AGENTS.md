@@ -37,6 +37,12 @@
 - 마스크 모서리: 둥근 사각형 마스크가 거의 없어(모임소셜링 1곳 적용) 보정할 것 없음. 색 불일치(Symbols vs External)는 `btn/navi/cancel`·`create`의 숨김 상태 차이뿐, 렌더링 동일
 - 남은 것: 전 화면 최종 렌더링 대표 점검, 중복 레이어 안전 점검(숨김→PNG 비교), 폴더의 다음 파일 링크 받기
 
+### Figma 파일 5: `4.카드 B2B` (fileKey NBt1Nog7tRj4BKTZ7m7dVZ, 2026-10-30)
+- 페이지: 마음카드(화면 14: 답장·메인(받은/보낸 마음)·받은카드·받는 사람 선택·카드작성·thankyou card 등) / Symbols / cover. 마스터는 `마음카드` 페이지의 숨은 `External Symbols`와 `Symbols` 둘 다
+- 완료: ① 누락 폰트 교체(SFPro→SF Pro, 나머지→Pretendard Variable) ② 슬라이스 삭제(전 페이지; 인스턴스 내부 2개는 마스터 `ic/32/text(mmp)`에서 정리 확인 필요) ③ 아이콘 마스터 배경 제거(External 23, Symbols 8; `b2b/profile`·`_/Key`·`btn/*`는 유지) ④ 대표 화면(받은마음·thankyou card) 렌더링 정상
+- 사용자 확인 대기: 숨김 레이어 22개(대부분 마스터·인스턴스 내부), 카드 이미지 위 장식 폰트(`SDAquaBlue`·`STXingkaiSC`·`SDPajamas` 등 15곳, Happy Children Day·Merry Christmas·2021 Happy) 처리 방향
+- 마스크: 둥근 사각형 마스크 4개 있으나 보정할 대상 없음
+
 ### Figma 파일 2 후속 (2026-10-30): `2.소셜_챌린지 B2B`
 - 화면이 쓰는 `External Symbols` 마스터를 Symbols 기준으로 맞춤: `check/24/round_off(mmp)`·`ic/16/participant_together(mmp)`. 하단 탭(`btn/navi(mmp)`)은 마스터를 바꾸지 않고 **활성(`_on` 아이콘) 인스턴스 11곳의 라벨만 파랑 #0957FF**로(비활성은 회색 유지)
 

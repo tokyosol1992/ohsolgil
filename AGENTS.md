@@ -2,9 +2,16 @@
 
 사용자가 **"포폴 사이트에 올릴 작업 시작하자"** 라고 하면, 작업 전에 아래 「브리핑」을 한국어로 요약해 먼저 보여주고, 사용자 확인 후 이어서 진행한다. (노드 ID는 사용자가 알아보지 못하니 화면 이름·눈에 보이는 모습으로 설명할 것)
 
-## 브리핑 (2026-10-29 기준)
+## 새 채팅 시작 안내 (2026-10-30 갱신, 사용자가 "다른 채팅에서 진행"하려고 정리)
+- 사용자가 **"할인꾹 정리 시작하자"** 라고 하면: 아래 「브리핑」과 `docs/휴넷_그로우, 그로우포웍스_최신화.md`(체크리스트·함정)를 읽고 요약해 보여준 뒤 **Figma 파일 링크를 받아** 시작한다.
+- **다음 작업**: 휴넷 재직 전 **블랙홀릭**이라는 회사의 **할인꾹** 서비스를 Sketch→Figma로 옮겼을 때 깨지는 부분을 **그로우포웍스와 똑같이** 개선(폰트·슬라이스·아이콘 배경/색·마스크 모서리·숨김 레이어·마스터 색 일치). 파일 링크는 사용자가 하나씩 준다. 할인꾹은 원본 포트폴리오(Figma `WqDqO6r4ukeLLNhAm4qIRl`)에도 프로젝트로 있음
+- 이전 작업은 모두 `HISTORY.md` 맨 위(2026-10-29~30)와 아래 「Figma 파일 N」 절에 기록됨
+- ⚠️ 이 기록은 작업 브랜치 `claude/tender-heisenberg-hoe3jg`에 있음(PR 미생성). 새 채팅이 `main`에서 시작하면 안 보이므로 **이 브랜치를 먼저 확인**하거나 사용자가 머지한 뒤 시작할 것
+- 새 채팅에서도 **장식 폰트(`SD*`·`Giants`·`STXingkai`·`KBO-*` 등)는 교체하지 말 것**, 사용자 결정 전 숨김 레이어를 지우지 말 것, 호출은 묶을 것(「Figma 작업 규칙」)
+
+## 브리핑 (2026-10-29 기준, 정리 끝난 파일은 아래 갱신)
 - **전체 흐름**: ① Sketch→Figma 파일 정리(진행 중, 폴더 https://www.figma.com/files/folder/424251949 의 모든 파일) → ② 정리된 디자인을 갈무리·취합해 프로토타입 파일에 더 멋진 문서로 만들기 → ③ 이 포트폴리오 사이트(Oh SolGil)에 적용
-- **정리 끝난 Figma 파일 3개**: `0.시작하기_로그인 B2B`(fileKey 1MW8hD1ayKZi6xZkfVDkqJ), `1.피드 B2B`(fileKey oXAFdmcpKOnHG5b1Darl3f), `2.소셜_챌린지 B2B`(fileKey PcswMPIZmu9lkWEydlO0UA). 폴더에 남은 파일은 사용자가 **파일 링크를 하나씩** 주면 진행(도구로 폴더 목록은 못 읽음)
+- **정리 끝난 Figma 파일 8개(그로우포웍스)**: `0.시작하기_로그인 B2B`(1MW8hD1ayKZi6xZkfVDkqJ), `1.피드 B2B`(oXAFdmcpKOnHG5b1Darl3f), `2.소셜_챌린지 B2B`(PcswMPIZmu9lkWEydlO0UA), `3.실천 B2B`(bP1usgoOLEiJDL6FsxMuLh), `4.카드 B2B`(NBt1Nog7tRj4BKTZ7m7dVZ), `4.클럽`(FftSLrjQmbTlVVcoBRJp3M), `5.일정`(r7rEyJqNFYPrtgcSf3MJmI), `5.나의성장 B2B`(zg0F76Ym9Bq1qT8auBvPBF). 폴더에 남은 파일은 사용자가 **파일 링크를 하나씩** 주면 진행(도구로 폴더 목록은 못 읽음)
 - **하는 일 체크리스트**: 누락 폰트→Pretendard Variable(파일마다 이름 변형 확인: `PretendardVariable` 등) · 슬라이스(점선) 삭제 · 색 빠진 아이콘 복구(흰 선/채움 꺼짐) · 아이콘·로고 마스터 배경색 제거 · **Sketch 마스크 모서리(예: 배너 16) 직접 적용** · 숨김/중복 레이어는 "숨김→화면 PNG 바이트 비교→같을 때만 삭제" · 정리 전후 대표 화면 렌더링 비교
 - **소통 규칙**: 노드 번호 말고 화면 이름으로 설명 / 승인 창이 너무 많이 뜨지 않게 호출을 묶고, 수정 전에 사용자 결정이 필요한 것(삭제 목록 등)은 먼저 보여주기 / 경력·성과는 지어내지 말기
 - **환경 메모**: Figma 스크린샷은 `get_screenshot`의 `enableBase64Response: true`로, 수정은 `use_figma`(세션 `create_session` 후). 권한 팝업을 줄이려면 모드 드롭다운을 Auto로. `.claude/settings.json`에 Figma·git 허용 규칙을 사용자가 직접 올려둠
@@ -22,6 +29,51 @@
 - 스택: Astro 7, 순수 CSS(`src/styles/global.css`, 다크 고정). 페이지는 `src/pages/index.astro` 하나, 데이터는 상단 배열.
 - 시안: https://claude.ai/artifact/E2awrer8gqNuoPrWADrMPG (사용자 승인됨)
 - 규칙: **경력·성과·요약·연락처는 사용자에게 받은 것만** 채움(지금은 "입력 예정" 자리 표시). 프로젝트 이름 8개는 Figma 포트폴리오 표지 기준.
+
+## Figma 작업 규칙 (승인 창 줄이기, 2026-10-30 사용자 요청)
+- `use_figma`·스크린샷 호출을 **잘게 쪼개지 말 것**. 페이지별 감사→수정→재확인을 따로 보내지 말고, 안전한 작업(폰트 교체·슬라이스 삭제 등)은 **감사+수정+검증을 한 호출**에 묶는다.
+- 여러 페이지는 한 메시지에서 **병렬 호출**하고, 확인용 스크린샷은 파일당 대표 화면 2~3장만 본다.
+- 삭제·구조 변경처럼 사용자 결정이 필요한 것만 **목록으로 한 번에** 보여주고 한 번에 답을 받는다. 노드 ID 대신 화면 이름으로 설명한다.
+- 마스터 컴포넌트는 `Symbols` 페이지와 화면 페이지의 숨은 `External Symbols` 그룹에 **둘 다** 있다. 색·배경 수정은 양쪽에 같이 적용하고, 화면이 쓰는 쪽(External)과 Symbols의 색이 다른지 비교한다. 하단 탭(`btn/navi`)처럼 상태(활성/비활성)로 색이 갈리는 건 마스터를 바꾸지 말고 인스턴스만 바꾼다.
+- 권한 설정(`.claude/settings.json`)은 자동 모드 분류기가 에이전트의 직접 수정을 막는다. 허용 규칙을 늘리려면 사용자가 직접 올릴 것.
+
+### Figma 파일 4: `3.실천 B2B` (fileKey bP1usgoOLEiJDL6FsxMuLh, 2026-10-30)
+- 페이지: 실천 / 메모·이미지 첨부 / 코치마크 / 모임소셜링(작업중) / doc / Symbols / cover (마스터는 `실천` 페이지의 숨은 `External Symbols` 그룹과 `Symbols` 페이지 **둘 다**)
+- 완료: ① 누락 폰트(SFPro→SF Pro, 나머지·PascalCase 변형→Pretendard Variable) 교체, 누락 0 ② 슬라이스 전 페이지 0 ③ 아이콘 마스터 배경 fill 제거(Symbols 52, External 59; `ic/64/gnb_function`·`b2b/profile`·`btn/*`·날짜·토글은 배경이 디자인이라 유지) ④ 숨김 레이어 28개 삭제(실천 9·모임소셜링 11·doc 6·코치마크 2, 마스터·인스턴스 내부 제외) ⑤ `접근권한_선택한 사진` 화면 닫기(X)만 인스턴스에서 회색 #666 (흰 X가 흰 바탕에 안 보였음)
+- 확인: 코치마크·이모티콘 편집 화면의 흰 X는 어두운 바탕이라 정상 → 마스터 `ic/40/close`, `ic/32/close`는 흰색 유지. ⚠️ 코치마크 화면은 흰 프레임 위에 딤을 덮는 구조라 "조상 배경 밝기"로 흰 아이콘을 판별하면 오탐
+- 마스크 모서리: 둥근 사각형 마스크가 거의 없어(모임소셜링 1곳 적용) 보정할 것 없음. 색 불일치(Symbols vs External)는 `btn/navi/cancel`·`create`의 숨김 상태 차이뿐, 렌더링 동일
+- 남은 것: 전 화면 최종 렌더링 대표 점검, 중복 레이어 안전 점검(숨김→PNG 비교), 폴더의 다음 파일 링크 받기
+
+### Figma 파일 5: `4.카드 B2B` (fileKey NBt1Nog7tRj4BKTZ7m7dVZ, 2026-10-30)
+- 페이지: 마음카드(화면 14: 답장·메인(받은/보낸 마음)·받은카드·받는 사람 선택·카드작성·thankyou card 등) / Symbols / cover. 마스터는 `마음카드` 페이지의 숨은 `External Symbols`와 `Symbols` 둘 다
+- 완료: ① 누락 폰트 교체(SFPro→SF Pro, 나머지→Pretendard Variable) ② 슬라이스 삭제(전 페이지; 인스턴스 내부 2개는 마스터 `ic/32/text(mmp)`에서 정리 확인 필요) ③ 아이콘 마스터 배경 제거(External 23, Symbols 8; `b2b/profile`·`_/Key`·`btn/*`는 유지) ④ 대표 화면(받은마음·thankyou card) 렌더링 정상
+- 사용자 결정(2026-10-30): 카드 이미지 위 장식 폰트(`SDAquaBlue`·`STXingkaiSC`·`SDPajamas` 등 15곳)는 **그대로 둠**(대체 서체로 보임). 화면 직접 숨김 레이어 11개 삭제(마스터·인스턴스 내부 11개는 유지), 남은 슬라이스 0
+- 마스크: 둥근 사각형 마스크 4개 있으나 보정할 대상 없음
+
+### Figma 파일 6: `4.클럽` (fileKey FftSLrjQmbTlVVcoBRJp3M, 2026-10-30)
+- 페이지: 개설, 수정(화면 11, 숨은 `External Symbols` 그룹 0:2464) / 상세페이지(화면 30) / Symbols / cover
+- 완료: ① 누락 폰트 교체(SFPro→SF Pro, AppleSDGothicNeo·NotoSansCJKkr→Pretendard Variable; 일부 구간 교체가 실패하면 `t.fontName=`으로 노드 단위 교체) ② 슬라이스 전 페이지 0(상세페이지는 마스터가 `개설, 수정`·Symbols에 있어 마스터 정리 후 자동 반영) ③ 아이콘 마스터 배경 제거(External 41, Symbols 11) ④ 헤더 `form/title/closed`의 흰 닫기(X)가 흰 바탕에 안 보임 → 마스터에서 #666으로 (헤더 5곳). 하단 FAB의 흰 X(파란 원 위)와 하단 시트 뒤 회색 모서리(딤)는 정상
+- 마스크 모서리 보정 대상 없음. 숨김 레이어 20개 삭제 완료(사용자 승인, 상세페이지 `text/challenge/percent` 17·`ic/32/clear_text(mmp)` 2, 개설 `noti/practice` 1; 마스터·인스턴스 내부 제외) → 이 파일 정리 끝
+- ⚠️ 함정: 슬라이스 삭제 후 같은 호출에서 `findAll`로 이름을 읽으면 삭제된 인스턴스 노드 오류 → 삭제는 마지막에, 순회는 try/catch
+
+### Figma 파일 7: `5.일정` (fileKey r7rEyJqNFYPrtgcSf3MJmI, 2026-10-30)
+- 페이지: 개설(화면 12·일정만들기 등, 숨은 `External Symbols` 그룹 0:876) / 일정 상세(6) / Symbols / cover
+- 완료: ① 누락 폰트 교체(`PretendardVariable`→`Pretendard Variable` 139구간, SFPro→SF Pro 159, AppleSDGothicNeo→Pretendard 4; 누락 0) ② 슬라이스 전 페이지 0 ③ 아이콘 마스터 배경 제거(External 13, Symbols 6; `_/Key`·`b2b/profile`·`indicator`·`btn/24/arrow_down`은 유지) ④ `ic/24/participant(mmp)`(참여인원 행 아이콘)가 흰색이라 흰 바탕에서 안 보임 → External 마스터를 #1B1D1F로(5곳), 렌더링 확인
+- (사용자 요청) 아이콘 색 재점검: 두 페이지가 쓰는 아이콘 마스터는 `Symbols`가 아니라 `개설` 페이지의 숨은 `External Symbols`(0:876)에 있음(Symbols엔 파랑 `club_*`류만). 바텀시트 아이콘 `edit(mmp)`(#979797 연회색)·`undo(mmp)`·`report(mmp)`(일부 #979797)를 **#1B1D1F로 통일**, 시트 3개(내 일정·참여자·취소)에서 확인. 의도적으로 둔 회색: `arrow_down` #858d92(작은 화살표), `arrow_left` #666(뒤로가기)
+- 마스크 모서리·숨김 레이어: 대상 없음. 대표 화면(일정만들기 전체, 일정 상세) 렌더링 정상. `ic/32/close(mmp)`·`setting`의 흰색은 External Symbols 샘플 안에만 있어 화면 영향 없음
+- 예외: 자동 모드 안전 장치가 `.claude/settings.json` 직접 수정을 막음(사용자가 허용 요청했을 때만 update-config 스킬로 처리)
+
+- (사용자 요청) 5.일정 화살표 통일: `ic/16/arrow_down(mmp)`·`ic/32/arrow_left(mmp)` 마스터를 #1B1D1F로(인스턴스 7곳 확인 후 5곳 #1B1D1F)
+
+### Figma 파일 8: `5.나의성장 B2B` (fileKey zg0F76Ym9Bq1qT8auBvPBF, 2026-10-30)
+- 페이지: 나의성장(화면 76, 숨은 `External Symbols` 그룹 0:8469) / Page 1(최상위 191개: 피드·나의성장 화면, 날짜·캘린더·CHALLENGE COMPLETE 등 작업 모음) / Symbols / cover
+- 완료: ① 누락 폰트 교체(나의성장 1,214구간: `PretendardVariable`→`Pretendard Variable`, NotoSansCJKkr→Pretendard; Page 1 57구간) ② 슬라이스 전 페이지 0 ③ 아이콘 마스터 배경 제거(External 64, Symbols 17; `toggle`·`badge/new`·`b2b/profile`·`btn/32/*`는 유지) ④ 마스크 모서리: Page 1에서 26곳 보정(`cornerRadius`+`clipsContent`)
+- ⚠️ **Page 1의 장식 폰트(`SDPress` 13·`Giants Inline` 2·`SDGdMyeongjo`·`SDCinemaTheater`·`SDCheongRyu`·`KBO-Dia-Gothic-Medium`)도 Pretendard로 바꿔버림**(4.카드에서 사용자가 "장식 폰트는 그대로"라고 한 결정과 어긋남 → 장식·스포츠 폰트는 자동 교체 대상에서 제외하는 목록을 둘 것). 되돌리려면 Figma 버전 기록 사용
+- 사용자 결정(2026-10-30): 숨김 레이어 4개 삭제(`noti/practice` 2·`ic/32/feed_noti(mmp)` 1·`ic/32/search(mmp)` 1). 아이콘은 **화살표와 시트 아이콘만** #1B1D1F로 통일: `ic/*/arrow_*` 11개·`edit`·`delete` 마스터를 External·Symbols 양쪽에 적용(흰색 paint는 건드리지 않고 비흰색만 변경, 인스턴스 186곳 반영). `like`·`scraps`·`participant_*`·`feed_noti`·`more` 등은 그대로 둠
+- 남은 것: 변경 후 대표 화면 렌더링 확인(이번엔 못 봄), 화살표·시트 외 아이콘 색은 필요 시 별도 요청
+
+### Figma 파일 2 후속 (2026-10-30): `2.소셜_챌린지 B2B`
+- 화면이 쓰는 `External Symbols` 마스터를 Symbols 기준으로 맞춤: `check/24/round_off(mmp)`·`ic/16/participant_together(mmp)`. 하단 탭(`btn/navi(mmp)`)은 마스터를 바꾸지 않고 **활성(`_on` 아이콘) 인스턴스 11곳의 라벨만 파랑 #0957FF**로(비활성은 회색 유지)
 
 ## 현재 상태 (2026-10-28)
 - ✅ 시안 그대로 구현·**배포 완료**: https://tokyosol1992.github.io/ohsolgil (소개·경력·프로젝트·문서·연락처·MoHo 링크, 모바일 가로 스크롤 없음)

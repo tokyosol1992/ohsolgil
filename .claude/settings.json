@@ -2,6 +2,7 @@
   "permissions": {
     "allow": [
       "mcp__Figma",
+      "mcp__Figma__*",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",

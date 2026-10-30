@@ -49,6 +49,12 @@
 - 마스크 모서리 보정 대상 없음. 숨김 레이어 20개 삭제 완료(사용자 승인, 상세페이지 `text/challenge/percent` 17·`ic/32/clear_text(mmp)` 2, 개설 `noti/practice` 1; 마스터·인스턴스 내부 제외) → 이 파일 정리 끝
 - ⚠️ 함정: 슬라이스 삭제 후 같은 호출에서 `findAll`로 이름을 읽으면 삭제된 인스턴스 노드 오류 → 삭제는 마지막에, 순회는 try/catch
 
+### Figma 파일 7: `5.일정` (fileKey r7rEyJqNFYPrtgcSf3MJmI, 2026-10-30)
+- 페이지: 개설(화면 12·일정만들기 등, 숨은 `External Symbols` 그룹 0:876) / 일정 상세(6) / Symbols / cover
+- 완료: ① 누락 폰트 교체(`PretendardVariable`→`Pretendard Variable` 139구간, SFPro→SF Pro 159, AppleSDGothicNeo→Pretendard 4; 누락 0) ② 슬라이스 전 페이지 0 ③ 아이콘 마스터 배경 제거(External 13, Symbols 6; `_/Key`·`b2b/profile`·`indicator`·`btn/24/arrow_down`은 유지) ④ `ic/24/participant(mmp)`(참여인원 행 아이콘)가 흰색이라 흰 바탕에서 안 보임 → External 마스터를 #1B1D1F로(5곳), 렌더링 확인
+- 마스크 모서리·숨김 레이어: 대상 없음. 대표 화면(일정만들기 전체, 일정 상세) 렌더링 정상. `ic/32/close(mmp)`·`setting`의 흰색은 External Symbols 샘플 안에만 있어 화면 영향 없음
+- 예외: 자동 모드 안전 장치가 `.claude/settings.json` 직접 수정을 막음(사용자가 허용 요청했을 때만 update-config 스킬로 처리)
+
 ### Figma 파일 2 후속 (2026-10-30): `2.소셜_챌린지 B2B`
 - 화면이 쓰는 `External Symbols` 마스터를 Symbols 기준으로 맞춤: `check/24/round_off(mmp)`·`ic/16/participant_together(mmp)`. 하단 탭(`btn/navi(mmp)`)은 마스터를 바꾸지 않고 **활성(`_on` 아이콘) 인스턴스 11곳의 라벨만 파랑 #0957FF**로(비활성은 회색 유지)
 

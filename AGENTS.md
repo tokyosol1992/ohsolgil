@@ -40,8 +40,14 @@
 ### Figma 파일 5: `4.카드 B2B` (fileKey NBt1Nog7tRj4BKTZ7m7dVZ, 2026-10-30)
 - 페이지: 마음카드(화면 14: 답장·메인(받은/보낸 마음)·받은카드·받는 사람 선택·카드작성·thankyou card 등) / Symbols / cover. 마스터는 `마음카드` 페이지의 숨은 `External Symbols`와 `Symbols` 둘 다
 - 완료: ① 누락 폰트 교체(SFPro→SF Pro, 나머지→Pretendard Variable) ② 슬라이스 삭제(전 페이지; 인스턴스 내부 2개는 마스터 `ic/32/text(mmp)`에서 정리 확인 필요) ③ 아이콘 마스터 배경 제거(External 23, Symbols 8; `b2b/profile`·`_/Key`·`btn/*`는 유지) ④ 대표 화면(받은마음·thankyou card) 렌더링 정상
-- 사용자 확인 대기: 숨김 레이어 22개(대부분 마스터·인스턴스 내부), 카드 이미지 위 장식 폰트(`SDAquaBlue`·`STXingkaiSC`·`SDPajamas` 등 15곳, Happy Children Day·Merry Christmas·2021 Happy) 처리 방향
+- 사용자 결정(2026-10-30): 카드 이미지 위 장식 폰트(`SDAquaBlue`·`STXingkaiSC`·`SDPajamas` 등 15곳)는 **그대로 둠**(대체 서체로 보임). 화면 직접 숨김 레이어 11개 삭제(마스터·인스턴스 내부 11개는 유지), 남은 슬라이스 0
 - 마스크: 둥근 사각형 마스크 4개 있으나 보정할 대상 없음
+
+### Figma 파일 6: `4.클럽` (fileKey FftSLrjQmbTlVVcoBRJp3M, 2026-10-30)
+- 페이지: 개설, 수정(화면 11, 숨은 `External Symbols` 그룹 0:2464) / 상세페이지(화면 30) / Symbols / cover
+- 완료: ① 누락 폰트 교체(SFPro→SF Pro, AppleSDGothicNeo·NotoSansCJKkr→Pretendard Variable; 일부 구간 교체가 실패하면 `t.fontName=`으로 노드 단위 교체) ② 슬라이스 전 페이지 0(상세페이지는 마스터가 `개설, 수정`·Symbols에 있어 마스터 정리 후 자동 반영) ③ 아이콘 마스터 배경 제거(External 41, Symbols 11) ④ 헤더 `form/title/closed`의 흰 닫기(X)가 흰 바탕에 안 보임 → 마스터에서 #666으로 (헤더 5곳). 하단 FAB의 흰 X(파란 원 위)와 하단 시트 뒤 회색 모서리(딤)는 정상
+- 마스크 모서리 보정 대상 없음. 숨김 레이어(상세페이지 `text/challenge/percent` 17, `ic/32/clear_text(mmp)` 2, 개설 `noti/practice` 1)는 사용자 결정 대기
+- ⚠️ 함정: 슬라이스 삭제 후 같은 호출에서 `findAll`로 이름을 읽으면 삭제된 인스턴스 노드 오류 → 삭제는 마지막에, 순회는 try/catch
 
 ### Figma 파일 2 후속 (2026-10-30): `2.소셜_챌린지 B2B`
 - 화면이 쓰는 `External Symbols` 마스터를 Symbols 기준으로 맞춤: `check/24/round_off(mmp)`·`ic/16/participant_together(mmp)`. 하단 탭(`btn/navi(mmp)`)은 마스터를 바꾸지 않고 **활성(`_on` 아이콘) 인스턴스 11곳의 라벨만 파랑 #0957FF**로(비활성은 회색 유지)

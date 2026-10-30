@@ -52,6 +52,7 @@
 ### Figma 파일 7: `5.일정` (fileKey r7rEyJqNFYPrtgcSf3MJmI, 2026-10-30)
 - 페이지: 개설(화면 12·일정만들기 등, 숨은 `External Symbols` 그룹 0:876) / 일정 상세(6) / Symbols / cover
 - 완료: ① 누락 폰트 교체(`PretendardVariable`→`Pretendard Variable` 139구간, SFPro→SF Pro 159, AppleSDGothicNeo→Pretendard 4; 누락 0) ② 슬라이스 전 페이지 0 ③ 아이콘 마스터 배경 제거(External 13, Symbols 6; `_/Key`·`b2b/profile`·`indicator`·`btn/24/arrow_down`은 유지) ④ `ic/24/participant(mmp)`(참여인원 행 아이콘)가 흰색이라 흰 바탕에서 안 보임 → External 마스터를 #1B1D1F로(5곳), 렌더링 확인
+- (사용자 요청) 아이콘 색 재점검: 두 페이지가 쓰는 아이콘 마스터는 `Symbols`가 아니라 `개설` 페이지의 숨은 `External Symbols`(0:876)에 있음(Symbols엔 파랑 `club_*`류만). 바텀시트 아이콘 `edit(mmp)`(#979797 연회색)·`undo(mmp)`·`report(mmp)`(일부 #979797)를 **#1B1D1F로 통일**, 시트 3개(내 일정·참여자·취소)에서 확인. 의도적으로 둔 회색: `arrow_down` #858d92(작은 화살표), `arrow_left` #666(뒤로가기)
 - 마스크 모서리·숨김 레이어: 대상 없음. 대표 화면(일정만들기 전체, 일정 상세) 렌더링 정상. `ic/32/close(mmp)`·`setting`의 흰색은 External Symbols 샘플 안에만 있어 화면 영향 없음
 - 예외: 자동 모드 안전 장치가 `.claude/settings.json` 직접 수정을 막음(사용자가 허용 요청했을 때만 update-config 스킬로 처리)
 

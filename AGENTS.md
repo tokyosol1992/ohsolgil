@@ -56,6 +56,14 @@
 - 마스크 모서리·숨김 레이어: 대상 없음. 대표 화면(일정만들기 전체, 일정 상세) 렌더링 정상. `ic/32/close(mmp)`·`setting`의 흰색은 External Symbols 샘플 안에만 있어 화면 영향 없음
 - 예외: 자동 모드 안전 장치가 `.claude/settings.json` 직접 수정을 막음(사용자가 허용 요청했을 때만 update-config 스킬로 처리)
 
+- (사용자 요청) 5.일정 화살표 통일: `ic/16/arrow_down(mmp)`·`ic/32/arrow_left(mmp)` 마스터를 #1B1D1F로(인스턴스 7곳 확인 후 5곳 #1B1D1F)
+
+### Figma 파일 8: `5.나의성장 B2B` (fileKey zg0F76Ym9Bq1qT8auBvPBF, 2026-10-30)
+- 페이지: 나의성장(화면 76, 숨은 `External Symbols` 그룹 0:8469) / Page 1(최상위 191개: 피드·나의성장 화면, 날짜·캘린더·CHALLENGE COMPLETE 등 작업 모음) / Symbols / cover
+- 완료: ① 누락 폰트 교체(나의성장 1,214구간: `PretendardVariable`→`Pretendard Variable`, NotoSansCJKkr→Pretendard; Page 1 57구간) ② 슬라이스 전 페이지 0 ③ 아이콘 마스터 배경 제거(External 64, Symbols 17; `toggle`·`badge/new`·`b2b/profile`·`btn/32/*`는 유지) ④ 마스크 모서리: Page 1에서 26곳 보정(`cornerRadius`+`clipsContent`)
+- ⚠️ **Page 1의 장식 폰트(`SDPress` 13·`Giants Inline` 2·`SDGdMyeongjo`·`SDCinemaTheater`·`SDCheongRyu`·`KBO-Dia-Gothic-Medium`)도 Pretendard로 바꿔버림**(4.카드에서 사용자가 "장식 폰트는 그대로"라고 한 결정과 어긋남 → 장식·스포츠 폰트는 자동 교체 대상에서 제외하는 목록을 둘 것). 되돌리려면 Figma 버전 기록 사용
+- 사용자 결정 대기: 숨김 레이어(나의성장 `noti/practice` 2·`ic/32/feed_noti(mmp)` 1·`ic/32/search(mmp)` 1) / 아이콘 색 통일 범위(External 기준: `edit` #979797, `delete`·`scraps_off`·`like`·`participant_*` 흰색+진한색 혼합, 화살표 #666·#858d92, `feed_noti` #000, `more` #878d91 등)
+
 ### Figma 파일 2 후속 (2026-10-30): `2.소셜_챌린지 B2B`
 - 화면이 쓰는 `External Symbols` 마스터를 Symbols 기준으로 맞춤: `check/24/round_off(mmp)`·`ic/16/participant_together(mmp)`. 하단 탭(`btn/navi(mmp)`)은 마스터를 바꾸지 않고 **활성(`_on` 아이콘) 인스턴스 11곳의 라벨만 파랑 #0957FF**로(비활성은 회색 유지)
 

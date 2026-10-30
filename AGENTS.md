@@ -46,7 +46,7 @@
 ### Figma 파일 6: `4.클럽` (fileKey FftSLrjQmbTlVVcoBRJp3M, 2026-10-30)
 - 페이지: 개설, 수정(화면 11, 숨은 `External Symbols` 그룹 0:2464) / 상세페이지(화면 30) / Symbols / cover
 - 완료: ① 누락 폰트 교체(SFPro→SF Pro, AppleSDGothicNeo·NotoSansCJKkr→Pretendard Variable; 일부 구간 교체가 실패하면 `t.fontName=`으로 노드 단위 교체) ② 슬라이스 전 페이지 0(상세페이지는 마스터가 `개설, 수정`·Symbols에 있어 마스터 정리 후 자동 반영) ③ 아이콘 마스터 배경 제거(External 41, Symbols 11) ④ 헤더 `form/title/closed`의 흰 닫기(X)가 흰 바탕에 안 보임 → 마스터에서 #666으로 (헤더 5곳). 하단 FAB의 흰 X(파란 원 위)와 하단 시트 뒤 회색 모서리(딤)는 정상
-- 마스크 모서리 보정 대상 없음. 숨김 레이어(상세페이지 `text/challenge/percent` 17, `ic/32/clear_text(mmp)` 2, 개설 `noti/practice` 1)는 사용자 결정 대기
+- 마스크 모서리 보정 대상 없음. 숨김 레이어 20개 삭제 완료(사용자 승인, 상세페이지 `text/challenge/percent` 17·`ic/32/clear_text(mmp)` 2, 개설 `noti/practice` 1; 마스터·인스턴스 내부 제외) → 이 파일 정리 끝
 - ⚠️ 함정: 슬라이스 삭제 후 같은 호출에서 `findAll`로 이름을 읽으면 삭제된 인스턴스 노드 오류 → 삭제는 마지막에, 순회는 try/catch
 
 ### Figma 파일 2 후속 (2026-10-30): `2.소셜_챌린지 B2B`

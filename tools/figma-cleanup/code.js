@@ -25,6 +25,21 @@ async function prog(label, frac) {
   await new Promise((r) => setTimeout(r, 0)); // UI가 그릴 틈을 줌
 }
 
+// ---- 건수 보고 (UI의 n/N건 표시용) -------------------------------
+// total: 처리할 전체 건수, done: 처리 완료, skipped: 건너뜀(인스턴스 안이라 못 지움 등)
+function makeCounter(key, label, total, skipped0) {
+  const c = { key, label, total, done: 0, skipped: skipped0 || 0, last: 0 };
+  c.send = async (force) => {
+    const now = Date.now();
+    if (!force && now - c.last < 90) return;
+    c.last = now;
+    figma.ui.postMessage({ type: 'count', key, label, total, done: c.done, skipped: c.skipped });
+    await new Promise((r) => setTimeout(r, 0));
+  };
+  return c;
+}
+const withCount = (res, c) => Object.assign(res, { count: c.total, doneN: c.done, skippedN: c.skipped });
+
 async function getPages(scope) {
   if (scope === 'all') {
     await figma.loadAllPagesAsync();
@@ -96,23 +111,28 @@ async function fontStep(pages, userMap, apply) {
   if (!apply) return Object.assign(base, { found: '없는 폰트 ' + missing.length + '종 · 텍스트 ' + missingTexts + '개 (전체 ' + fonts.length + '종 사용 중)', done: null });
 
   const chosen = Object.keys(userMap || {}).filter((k) => userMap[k]);
-  if (!chosen.length) return Object.assign(base, { found: '없는 폰트 ' + missing.length + '종', done: '교체할 폰트를 고르지 않아 건너뜀' });
-  let fixed = 0, partial = 0;
+  if (!chosen.length) return Object.assign(base, { found: '없는 폰트 ' + missing.length + '종', done: '교체할 폰트를 고르지 않아 건너뜀', count: 0, doneN: 0, skippedN: 0 });
+  // 먼저 바꿀 텍스트를 모두 모아 전체 건수를 정함
+  const plan = []; let partial = 0;
+  for (const t of texts) {
+    const segments = t.getStyledTextSegments(['fontName']);
+    if (!segments.some((s) => userMap[s.fontName.family])) continue;
+    // 고르지 않은 '없는 폰트'가 같이 있으면 원래 모양을 복원할 수 없어 건너뜀
+    if (segments.some((s) => !userMap[s.fontName.family] && !has(s.fontName))) { partial++; continue; }
+    plan.push({ t, segments });
+  }
+  const c = makeCounter('fonts', '폰트 교체', plan.length + partial, partial);
+  await c.send(true);
   const failed = [];
-  for (let i = 0; i < texts.length; i++) {
-    const t = texts[i];
-    if (i % 25 === 0) await prog('폰트 바꾸는 중', 0.3 + (i / texts.length) * 0.7);
+  for (let i = 0; i < plan.length; i++) {
+    const { t, segments } = plan[i];
+    await prog('폰트 바꾸는 중', 0.3 + (i / plan.length) * 0.7);
     try {
-      const segments = t.getStyledTextSegments(['fontName']);
-      const mapped = segments.filter((s) => userMap[s.fontName.family]);
-      if (!mapped.length) continue;
-      // 고르지 않은 '없는 폰트'가 같이 있으면 원래 모양을 복원할 수 없어 건너뜀
-      if (segments.some((s) => !userMap[s.fontName.family] && !has(s.fontName))) { partial++; continue; }
       const resolve = (s) => {
         const tgt = userMap[s.fontName.family];
         return tgt ? { family: tgt, style: pickStyle(famStyles, tgt, s.fontName.style) } : s.fontName;
       };
-      const first = resolve(mapped[0]);
+      const first = resolve(segments.find((s) => userMap[s.fontName.family]));
       await figma.loadFontAsync(first);
       t.fontName = first; // 누락 폰트는 setRangeFontName이 막히므로: 통째 지정 → 구간별 복원
       for (const s of segments) {
@@ -120,61 +140,76 @@ async function fontStep(pages, userMap, apply) {
         await figma.loadFontAsync(f);
         t.setRangeFontName(s.start, s.end, f);
       }
-      fixed++;
-    } catch (e) { failed.push(t.id + ': ' + String(e.message).slice(0, 60)); }
+      c.done++;
+    } catch (e) { c.skipped++; failed.push(t.id + ': ' + String(e.message).slice(0, 60)); }
+    await c.send();
   }
-  return Object.assign(base, {
+  await c.send(true);
+  return withCount(Object.assign(base, {
     found: '없는 폰트 ' + missing.length + '종', failed,
-    done: fixed + '개 텍스트 교체' + (partial ? ' (고르지 않은 폰트가 섞인 ' + partial + '개는 건너뜀)' : ''),
-  });
+    done: c.done + '개 텍스트 교체' + (c.skipped ? ' (건너뜀 ' + c.skipped + ')' : ''),
+  }), c);
 }
 
 // ---- 2. 슬라이스 ---------------------------------------------
 async function sliceStep(pages, apply) {
   await prog('슬라이스 찾는 중', 0.1);
-  let found = 0, removed = 0, skipped = 0;
-  for (const page of pages) {
-    for (const s of page.findAllWithCriteria({ types: ['SLICE'] })) {
-      found++;
-      if (!apply) continue;
-      try { s.remove(); removed++; } catch (e) { skipped++; } // 인스턴스 안 슬라이스는 마스터에서 지우면 사라짐
+  const list = [];
+  for (const page of pages) list.push(...page.findAllWithCriteria({ types: ['SLICE'] }));
+  const c = makeCounter('slices', '슬라이스 삭제', list.length);
+  if (apply) {
+    await c.send(true);
+    for (const s of list) {
+      try { s.remove(); c.done++; } catch (e) { c.skipped++; } // 인스턴스 안 슬라이스는 마스터에서 지우면 사라짐
+      await c.send();
     }
+    await c.send(true);
   }
-  return { label: '슬라이스 삭제', found: found + '개', done: apply ? removed + '개 삭제 (건너뜀 ' + skipped + ')' : null, failed: [] };
+  return withCount({ label: '슬라이스 삭제', found: list.length + '개', done: apply ? c.done + '개 삭제 (건너뜀 ' + c.skipped + ')' : null, failed: [] }, c);
 }
 
 // ---- 3. 숨김 레이어 ------------------------------------------
 async function hiddenStep(pages, apply) {
   await prog('숨김 레이어 찾는 중', 0.1);
-  let found = 0, removed = 0, skipped = 0;
+  const list = [];
   for (const page of pages) {
-    const hidden = page.findAll((n) => n.visible === false && n.type !== 'COMPONENT' && n.type !== 'COMPONENT_SET');
-    for (const n of hidden) {
+    for (const n of page.findAll((n) => n.visible === false && n.type !== 'COMPONENT' && n.type !== 'COMPONENT_SET')) {
       // 숨김 노드의 자식은 따로 세지 않음 (부모가 삭제되면 같이 사라짐)
-      if (n.removed || (n.parent && n.parent.visible === false)) continue;
-      found++;
-      if (!apply) continue;
-      try { n.remove(); removed++; } catch (e) { skipped++; }
+      if (n.parent && n.parent.visible === false) continue;
+      list.push(n);
     }
   }
-  return { label: '숨김 레이어 삭제', found: found + '개', done: apply ? removed + '개 삭제 (건너뜀 ' + skipped + ')' : null, failed: [] };
+  const c = makeCounter('hidden', '숨김 레이어 삭제', list.length);
+  if (apply) {
+    await c.send(true);
+    for (const n of list) {
+      try { if (!n.removed) n.remove(); c.done++; } catch (e) { c.skipped++; }
+      await c.send();
+    }
+    await c.send(true);
+  }
+  return withCount({ label: '숨김 레이어 삭제', found: list.length + '개', done: apply ? c.done + '개 삭제 (건너뜀 ' + c.skipped + ')' : null, failed: [] }, c);
 }
 
 // ---- 4. 아이콘·로고 마스터의 배경 fill -----------------------
 // 이름이 ic/·icon·logo 로 시작하는 컴포넌트의 자체 fill 제거
 async function iconBgStep(pages, apply) {
   await prog('아이콘 배경 찾는 중', 0.1);
-  let found = 0, done = 0;
-  const names = [];
+  const list = [];
   for (const page of pages) {
     for (const c of page.findAllWithCriteria({ types: ['COMPONENT'] })) {
       if (!/^(ic[\/_]|icon|logo)/i.test(c.name)) continue;
       if (c.fills === figma.mixed || !c.fills.some((f) => f.visible !== false)) continue;
-      found++; names.push(c.name);
-      if (apply) { c.fills = []; done++; }
+      list.push(c);
     }
   }
-  return { label: '아이콘·로고 배경 제거', found: found + '개', done: apply ? done + '개 제거' : null, failed: [], detail: names.slice(0, 20) };
+  const cn = makeCounter('iconBg', '아이콘·로고 배경 제거', list.length);
+  if (apply) {
+    await cn.send(true);
+    for (const c of list) { try { c.fills = []; cn.done++; } catch (e) { cn.skipped++; } await cn.send(); }
+    await cn.send(true);
+  }
+  return withCount({ label: '아이콘·로고 배경 제거', found: list.length + '개', done: apply ? cn.done + '개 제거' : null, failed: [], detail: list.slice(0, 20).map((c) => c.name) }, cn);
 }
 
 // ---- 5. Sketch 마스크 모서리 보정 ----------------------------
@@ -191,8 +226,8 @@ function sameArea(a, b) {
 }
 async function maskStep(pages, apply) {
   await prog('마스크 모서리 확인 중', 0.1);
-  let found = 0, done = 0, skippedReal = 0, skippedOther = 0;
-  const detail = [];
+  let skippedReal = 0, skippedOther = 0;
+  const list = [];
   for (const page of pages) {
     for (const m of page.findAllWithCriteria({ types: ['RECTANGLE'] })) {
       if (!/mask/i.test(m.name) || insideInstance(m)) continue;
@@ -202,16 +237,20 @@ async function maskStep(pages, apply) {
       const target = sibs.slice(sibs.indexOf(m) + 1).find((n) => n.visible !== false);
       if (!target || !sameArea(m, target) || !('cornerRadius' in target) ||
           target.cornerRadius === figma.mixed || target.cornerRadius > 0) { skippedOther++; continue; }
-      found++;
-      if (detail.length < 15) detail.push(target.name + ' → ' + m.cornerRadius);
-      if (!apply) continue;
-      target.cornerRadius = m.cornerRadius;
-      if (target.type === 'FRAME') target.clipsContent = true;
-      done++;
+      list.push({ target, r: m.cornerRadius });
     }
   }
-  return { label: '마스크 모서리 보정', found: found + '곳', done: apply ? done + '곳 적용' : null, failed: [],
-    detail: detail.concat(['(이미 마스크로 동작 ' + skippedReal + ', 대상 아님 ' + skippedOther + ')']) };
+  const detail = list.slice(0, 15).map((x) => x.target.name + ' → ' + x.r).concat(['(이미 마스크로 동작 ' + skippedReal + ', 대상 아님 ' + skippedOther + ')']);
+  const c = makeCounter('masks', '마스크 모서리 보정', list.length);
+  if (apply) {
+    await c.send(true);
+    for (const { target, r } of list) {
+      try { target.cornerRadius = r; if (target.type === 'FRAME') target.clipsContent = true; c.done++; } catch (e) { c.skipped++; }
+      await c.send();
+    }
+    await c.send(true);
+  }
+  return withCount({ label: '마스크 모서리 보정', found: list.length + '곳', done: apply ? c.done + '곳 적용' : null, failed: [], detail }, c);
 }
 
 // ---- 6. 중복 레이어 (안전 삭제) -------------------------------
@@ -252,9 +291,11 @@ async function dupStep(pages, apply) {
     }
   }
   const detail = cands.slice(0, 15).map((n) => n.name + ' (' + n.type + ')'); // 삭제 전에 읽어 둠
+  const c = makeCounter('dupes', '중복 레이어 점검', cands.length);
   let removed = 0, restored = 0;
   const failed = [];
   if (apply) {
+    await c.send(true);
     const baseline = {}; // 프레임 id → 기준 PNG
     for (let i = 0; i < cands.length; i++) {
       const k = cands[i];
@@ -264,17 +305,18 @@ async function dupStep(pages, apply) {
         if (!baseline[root.id]) baseline[root.id] = await root.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 1 } });
         k.visible = false;
         const after = await root.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 1 } });
-        if (sameBytes(baseline[root.id], after)) { k.remove(); removed++; }
-        else { k.visible = true; restored++; }
+        if (sameBytes(baseline[root.id], after)) { k.remove(); removed++; c.done++; }
+        else { k.visible = true; restored++; c.skipped++; } // 화면이 달라지면 복구 = 지우지 않음
       } catch (e) {
         try { k.visible = true; } catch (_) {}
-        failed.push(k.id + ': ' + String(e.message).slice(0, 60));
+        failed.push(k.id + ': ' + String(e.message).slice(0, 60)); c.skipped++;
       }
+      await c.send();
     }
+    await c.send(true);
   }
-  return { label: '중복 레이어 점검', found: cands.length + '개 후보',
-    done: apply ? removed + '개 삭제 (화면이 달라져 복구 ' + restored + ')' : null, failed,
-    detail };
+  return withCount({ label: '중복 레이어 점검', found: cands.length + '개 후보',
+    done: apply ? removed + '개 삭제 (화면이 달라져 복구 ' + restored + ')' : null, failed, detail }, c);
 }
 
 // ---- 7. 색 빠진 아이콘 후보 (목록만, 수정 안 함) -----------------
@@ -321,7 +363,7 @@ async function faintIconStep(pages, apply) {
     try { uses = (await c.getInstancesAsync()).length; } catch (e) {}
     items.push({ id: c.id, name: c.name, note: reason + ' · 사용처 ' + uses });
   }
-  return { label: '색 빠진 아이콘 후보', found: items.length + '개 (목록만)', done: null, failed: [], items: items.slice(0, 60) };
+  return { label: '색 빠진 아이콘 후보', found: items.length + '개 (목록만)', done: null, failed: [], items: items.slice(0, 60), count: 0, info: true };
 }
 
 // ---- 정리 전후 화면 비교 ---------------------------------------
@@ -355,13 +397,12 @@ async function snapshot(pages, ids, label) {
 // 보정: 폭을 필요한 만큼(올림) 늘림. 정렬 기준은 유지 — 오른쪽 정렬은 오른쪽 끝, 가운데는 중심 고정.
 // 인스턴스 안의 텍스트는 마스터에서 고쳐야 하므로 건너뜀. 오토레이아웃 자식은 레이아웃이 위치를 잡음.
 async function textWidthStep(pages, apply) {
-  const items = []; let done = 0, skipped = 0;
-  const failed = [];
+  const items = [], plan = [];
   const texts = [];
   for (const page of pages) texts.push(...page.findAllWithCriteria({ types: ['TEXT'] }));
   for (let i = 0; i < texts.length; i++) {
     const t = texts[i];
-    if (i % 20 === 0) await prog('고정폭 텍스트 확인 중', i / texts.length);
+    if (i % 20 === 0) await prog('고정폭 텍스트 확인 중', (i / texts.length) * (apply ? 0.5 : 1));
     if (t.textAutoResize !== 'NONE' || /\s/.test(t.characters.trim()) || insideInstance(t)) continue;
     try {
       for (const sg of t.getStyledTextSegments(['fontName'])) await figma.loadFontAsync(sg.fontName);
@@ -370,19 +411,32 @@ async function textWidthStep(pages, apply) {
       if (!(nw > t.width + 0.01 && wh > nh * 1.4)) continue;
       const target = Math.ceil(nw - 0.001);
       items.push({ id: t.id, name: t.characters.slice(0, 14), note: t.width + ' → ' + target + 'px' });
-      if (!apply) continue;
-      const delta = target - t.width;
-      const inAuto = t.parent && 'layoutMode' in t.parent && t.parent.layoutMode !== 'NONE' && t.layoutPositioning !== 'ABSOLUTE';
-      const x = t.x;
-      t.resize(target, t.height);
-      if (!inAuto) {
-        if (t.textAlignHorizontal === 'RIGHT') t.x = x - delta;
-        else if (t.textAlignHorizontal === 'CENTER') t.x = x - delta / 2;
-      }
-      done++;
-    } catch (e) { skipped++; failed.push(t.id + ': ' + String(e.message).slice(0, 60)); }
+      plan.push({ t, target });
+    } catch (e) { /* 폰트를 못 불러오는 텍스트는 건너뜀 */ }
   }
-  return { label: '고정폭 텍스트 보정', found: items.length + '곳', done: apply ? done + '곳 보정 (건너뜀 ' + skipped + ')' : null, failed, items: items.slice(0, 40) };
+  const c = makeCounter('textw', '고정폭 텍스트 보정', plan.length);
+  const failed = [];
+  if (apply) {
+    await c.send(true);
+    for (let i = 0; i < plan.length; i++) {
+      const { t, target } = plan[i];
+      await prog('고정폭 텍스트 넓히는 중', 0.5 + (i / plan.length) * 0.5);
+      try {
+        const delta = target - t.width;
+        const inAuto = t.parent && 'layoutMode' in t.parent && t.parent.layoutMode !== 'NONE' && t.layoutPositioning !== 'ABSOLUTE';
+        const x = t.x;
+        t.resize(target, t.height);
+        if (!inAuto) {
+          if (t.textAlignHorizontal === 'RIGHT') t.x = x - delta;
+          else if (t.textAlignHorizontal === 'CENTER') t.x = x - delta / 2;
+        }
+        c.done++;
+      } catch (e) { c.skipped++; failed.push(t.id + ': ' + String(e.message).slice(0, 60)); }
+      await c.send();
+    }
+    await c.send(true);
+  }
+  return withCount({ label: '고정폭 텍스트 보정', found: plan.length + '곳', done: apply ? c.done + '곳 보정 (건너뜀 ' + c.skipped + ')' : null, failed, items: items.slice(0, 40) }, c);
 }
 
 // ---- 실행 -----------------------------------------------------
@@ -404,7 +458,7 @@ async function run(msg, apply, stageOffset, stageTotal) {
   PROG.i = stageOffset || 0;
   const report = [];
   for (const [key, fn] of active) {
-    report.push(await fn(pages, apply, msg));
+    report.push(Object.assign(await fn(pages, apply, msg), { key }));
     PROG.i++;
   }
   if (!(apply && msg.compare)) figma.ui.postMessage({ type: 'progress', label: '마무리하는 중', pct: 100 }); // 전후 비교가 남았으면 100%를 미룸
@@ -439,6 +493,7 @@ figma.ui.onmessage = async (msg) => {
         figma.ui.postMessage({ type: 'compare', pairs, total: before.total, shown: pairs.length });
       }
     }
+    if (msg.type === 'close') figma.closePlugin();
     if (msg.type === 'select') {
       const nodes = [];
       for (const id of msg.ids) { const n = await figma.getNodeByIdAsync(id); if (n) nodes.push(n); }

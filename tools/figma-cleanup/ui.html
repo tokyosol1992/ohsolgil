@@ -111,6 +111,24 @@
   .popt small{color:var(--dim)}
   .glabel{padding:10px 12px 4px;color:var(--dim);font-size:12px}
   .sheet .row{display:flex;gap:10px;margin-top:12px}
+  .abig{display:flex;align-items:baseline;gap:6px;margin:2px 0 10px}
+  .abig b{font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+  .abig span{color:var(--sub);font-size:18px;font-weight:600}
+  .abar{height:8px;border-radius:4px;background:var(--card2);overflow:hidden}
+  .abar i{display:block;height:100%;width:0;border-radius:4px;background:var(--blue);transition:width .35s cubic-bezier(.3,.75,.25,1)}
+  .abar.done i{background:var(--green)}
+  .astats{display:flex;justify-content:space-between;color:var(--sub);font-size:13px;margin:8px 0 4px}
+  .astats b{color:var(--text)}
+  .asteps{margin-top:8px;border-top:1px solid var(--line);max-height:230px;overflow-y:auto}
+  .astep{padding:12px 0;border-bottom:1px solid var(--line)}
+  .astep .t{display:flex;justify-content:space-between;font-weight:600}
+  .astep .t em{font-style:normal;color:var(--sub);font-variant-numeric:tabular-nums}
+  .astep .t em.ok{color:var(--green)}
+  .astep .m{height:4px;border-radius:2px;background:var(--card2);margin-top:8px;overflow:hidden}
+  .astep .m i{display:block;height:100%;width:0;background:var(--blue);transition:width .3s}
+  .astep.fin .m i{background:var(--green)}
+  .astep small{color:var(--dim);font-size:12px}
+  .astatus{color:var(--sub);font-size:13px;margin-top:10px;min-height:20px}
   .sheet .row .btn{flex:1}
 </style>
 
@@ -152,6 +170,17 @@
   <div class="plist" id="pList"></div>
 </div>
 
+<div class="sheet" id="applySheet">
+  <div class="grab"></div>
+  <h4 id="aTitle">정리하는 중</h4>
+  <div class="abig"><b id="aDone">0</b><span>/ <span id="aTotal">0</span>건</span></div>
+  <div class="abar" id="aBar"><i id="aFill"></i></div>
+  <div class="astats"><span>남은 <b id="aLeft">0</b>건</span><span id="aSkip"></span></div>
+  <div class="asteps" id="aSteps"></div>
+  <div class="astatus" id="aStatus"></div>
+  <div class="row" id="aBtns"></div>
+</div>
+
 <div class="sheet" id="confirmSheet">
   <div class="grab"></div>
   <h4>정리를 적용할까요?</h4>
@@ -175,7 +204,7 @@ const TIPS={fonts:'없는 폰트를 찾아서 원하는 폰트로 바꿔요',sli
   faint:'흰색뿐이라 안 보일 수 있는 아이콘을 목록으로 보여줘요(수정 안 함)',textw:'1px 부족해서 두 줄이 된 숫자 텍스트를 넓혀요'};
 const REC=['Pretendard Variable','SF Pro','Roboto','Inter','Noto Sans KR','Noto Sans CJK KR'];
 
-const S={scope:'page',steps:{fonts:true,slices:true},compare:true,phase:'idle',families:[],fontMap:{},report:null,meta:null,cmp:[],cmpHtml:'',pickFam:null};
+const S={counts:{},left:null,applying:false,scope:'page',steps:{fonts:true,slices:true},compare:true,phase:'idle',families:[],fontMap:{},report:null,meta:null,cmp:[],cmpHtml:'',pickFam:null};
 
 /* ---------- 칩 ---------- */
 function renderChips(){
@@ -204,13 +233,29 @@ $('#seg').addEventListener('click',e=>{
 /* ---------- 상태 ---------- */
 function dirty(){ if(S.phase==='scanned'||S.phase==='applied'){S.phase='idle';$('#results').classList.add('stale');} renderFooter(); }
 function anySelected(){return STEPS.some(([k])=>S.steps[k]);}
+/* 적용할 건수: 폰트는 '대신 쓸 폰트를 고른' 것만, 목록만 보여주는 단계(색 빠진 아이콘)는 제외 */
+function actionable(){
+  if(!S.report)return 0;let n=0;
+  for(const r of S.report){
+    if(r.fonts)n+=r.fonts.filter(f=>f.missing&&S.fontMap[f.family]).reduce((a,f)=>a+f.texts,0);
+    else if(!r.info&&typeof r.count==='number')n+=r.count;
+  }
+  return n;
+}
+function leftCount(){let n=0;for(const k in S.counts){const c=S.counts[k];n+=Math.max(0,c.total-c.done-c.skipped);}return n;}
 function renderFooter(){
   const f=$('#foot'),m=$('#main'),r=$('#rescan');
   f.classList.toggle('busy',S.phase==='busy');
-  r.hidden=true;m.disabled=false;
-  if(S.phase==='scanned'){m.textContent='적용하기';r.hidden=false;}
-  else if(S.phase==='applied'){m.textContent='다시 탐색';}
-  else {m.textContent='탐색';m.disabled=!anySelected();}
+  r.hidden=true;m.disabled=false;m.dataset.act='scan';r.textContent='다시 탐색';
+  if(S.phase==='scanned'){
+    const n=actionable();r.hidden=false;
+    if(n===0){m.textContent='완료';m.dataset.act='close';}
+    else{m.textContent='적용하기 · '+n+'건';m.dataset.act='apply';}
+  }else if(S.phase==='applied'){
+    const left=S.left||0;
+    if(left===0){m.textContent='완료';m.dataset.act='close';r.hidden=false;}
+    else{m.textContent='다시 탐색 · 남은 '+left+'건';m.dataset.act='scan';}
+  }else{m.textContent='탐색';m.disabled=!anySelected();}
 }
 function opts(){
   const fontMap={};for(const k in S.fontMap)if(S.fontMap[k])fontMap[k]=S.fontMap[k];
@@ -222,15 +267,25 @@ function startScan(){
   $('#results').innerHTML='<div class="sk"></div><div class="sk"></div><div class="sk"></div>';
   renderFooter();post({type:'scan',...opts()});
 }
+function initCounts(){
+  S.counts={};
+  for(const r of S.report||[]){
+    if(r.info)continue;
+    const total=r.fonts?r.fonts.filter(f=>f.missing&&S.fontMap[f.family]).reduce((a,f)=>a+f.texts,0):(r.count||0);
+    if(total>0)S.counts[r.key]={label:r.label,total,done:0,skipped:0};
+  }
+}
 function startApply(){
-  S.phase='busy';S.cmp=[];S.cmpHtml='';showProg('준비하는 중',0);renderFooter();
+  S.phase='busy';S.applying=true;S.cmp=[];S.cmpHtml='';S.statusText='준비하는 중';
+  initCounts();showProg('준비하는 중',0);renderFooter();renderApply(false);showSheet('#applySheet');
   post({type:'apply',...opts()});
 }
-$('#main').onclick=()=>{ if(S.phase==='scanned')openConfirm(); else startScan(); };
+$('#main').onclick=()=>{ const a=$('#main').dataset.act; if(a==='close')post({type:'close'}); else if(a==='apply')openConfirm(); else startScan(); };
 $('#rescan').onclick=startScan;
 
 /* ---------- 진행률 ---------- */
 function showProg(label,pct){
+  S.statusText=label;if(S.applying)$('#aStatus').textContent=label+'…';
   $('#plabel').innerHTML=esc(label)+'<span class="dots"><i></i><i></i><i></i></span>';
   $('#pfill').style.width=pct+'%';$('#ppct').textContent=pct+'%';
 }
@@ -239,16 +294,46 @@ function showProg(label,pct){
 let openSheet=null;
 function showSheet(id){openSheet=id;$('#scrim').classList.add('show');$(id).classList.add('show');}
 function hideSheet(){if(!openSheet)return;$('#scrim').classList.remove('show');$(openSheet).classList.remove('show');openSheet=null;}
-$('#scrim').onclick=hideSheet;
+$('#scrim').onclick=()=>{ if(S.applying)return; hideSheet(); };
 
 function openConfirm(){
   const names=STEPS.filter(([k])=>S.steps[k]).map(([,l])=>l);
   const fm=Object.keys(S.fontMap).filter(k=>S.fontMap[k]).length;
-  $('#cBody').innerHTML='선택한 작업: <b>'+esc(names.join(', '))+'</b>'+(S.steps.fonts?'<br>바꿀 폰트 '+fm+'종':'')+'<br>잘못되면 Figma에서 Cmd/Ctrl + Z로 되돌릴 수 있어요.';
+  $('#cBody').innerHTML='총 <b>'+actionable()+'건</b>을 정리해요.<br>선택한 작업: <b>'+esc(names.join(', '))+'</b>'+(S.steps.fonts?'<br>바꿀 폰트 '+fm+'종':'')+'<br>잘못되면 Figma에서 Cmd/Ctrl + Z로 되돌릴 수 있어요.';
   showSheet('#confirmSheet');
 }
 $('#cNo').onclick=hideSheet;
 $('#cYes').onclick=()=>{hideSheet();startApply();};
+
+/* ---------- 적용 시트: n/N건 ---------- */
+function renderApply(final){
+  const keys=STEPS.map(x=>x[0]).filter(k=>S.counts[k]&&S.counts[k].total>0);
+  let N=0,D=0,K=0;keys.forEach(k=>{const c=S.counts[k];N+=c.total;D+=c.done;K+=c.skipped;});
+  const left=Math.max(0,N-D-K);
+  $('#aDone').textContent=D;$('#aTotal').textContent=N;$('#aLeft').textContent=left;
+  $('#aSkip').textContent=K?'건너뜀 '+K+'건':'';
+  $('#aFill').style.width=(N?Math.round((D+K)/N*100):100)+'%';
+  $('#aBar').classList.toggle('done',final&&left===0);
+  $('#aTitle').textContent=!final?'정리하는 중':left===0?'모두 정리했어요':'일부가 남았어요';
+  $('#aSteps').innerHTML=keys.map(k=>{
+    const c=S.counts[k],rest=Math.max(0,c.total-c.done-c.skipped),fin=rest===0;
+    return `<div class="astep${fin?' fin':''}"><div class="t"><span>${esc(c.label)}</span><em class="${fin?'ok':''}">${c.done} / ${c.total}건</em></div>
+      <div class="m"><i style="width:${c.total?Math.round((c.done+c.skipped)/c.total*100):100}%"></i></div>
+      <small>${fin?(c.skipped?'건너뜀 '+c.skipped+'건':'완료'):'남은 '+rest+'건'+(c.skipped?' · 건너뜀 '+c.skipped+'건':'')}</small></div>`;
+  }).join('');
+  if(final){
+    $('#aStatus').textContent=left===0?'':'건너뛴 항목은 인스턴스 안이거나 화면이 달라져서 그대로 둔 거예요.';
+    $('#aBtns').innerHTML=left===0
+      ?'<button class="btn primary" id="aDoneBtn">완료</button>'
+      :'<button class="btn ghost" id="aClose">닫기</button><button class="btn primary" id="aRescan">다시 탐색</button>';
+  }else $('#aBtns').innerHTML='';
+  return left;
+}
+$('#aBtns').addEventListener('click',e=>{
+  if(e.target.id==='aDoneBtn')post({type:'close'});
+  if(e.target.id==='aClose')hideSheet();
+  if(e.target.id==='aRescan'){hideSheet();startScan();}
+});
 
 /* ---------- 폰트 고르기 ---------- */
 function openPicker(fam){S.pickFam=fam;$('#pTitle').textContent='‘'+fam+'’ 대신 쓸 폰트';$('#pQ').value='';renderPick();showSheet('#pickSheet');setTimeout(()=>$('#pQ').focus(),250);}
@@ -361,16 +446,23 @@ function save(name,text,type){const a=document.createElement('a');a.href=URL.cre
 function stamp(){return (S.meta&&S.meta.file||'figma').replace(/[^\w가-힣-]+/g,'_')+'_cleanup';}
 
 /* ---------- 플러그인 메시지 ---------- */
-function finish(){S.phase=S.pendingPhase;renderFooter();renderResults();}
+function finish(){
+  S.phase=S.pendingPhase;
+  if(S.phase==='applied'){S.applying=false;S.left=leftCount();renderApply(true);}
+  renderFooter();renderResults();
+}
 onmessage=async e=>{
   const m=e.data.pluginMessage;if(!m)return;
   if(m.type==='init'){S.families=m.families;S.file=m.file;}
   if(m.type==='progress')showProg(m.label,m.pct);
-  if(m.type==='error'){S.phase='idle';renderFooter();$('#results').innerHTML=`<div class="card"><h3 class="err">문제가 생겼어요</h3><div class="detail">${esc(m.message)}</div></div>`;}
+  if(m.type==='count'){S.counts[m.key]={label:m.label,total:m.total,done:m.done,skipped:m.skipped};if(S.applying)renderApply(false);}
+  if(m.type==='error'){S.phase='idle';S.applying=false;hideSheet();renderFooter();$('#results').innerHTML=`<div class="card"><h3 class="err">문제가 생겼어요</h3><div class="detail">${esc(m.message)}</div></div>`;}
   if(m.type==='scanned'||m.type==='applied'){
     S.report=m.report;S.meta=m;
+    if(m.type==='scanned'){S.counts={};S.left=null;}
     // 없는 폰트에 추천 폰트를 미리 골라 둠 (이미 고른 건 유지)
     for(const r of m.report)for(const f of (r.fonts||[]))if(f.missing&&f.suggest&&!(f.family in S.fontMap)&&S.families.includes(f.suggest))S.fontMap[f.family]=f.suggest;
+    if(m.type==='applied')for(const r of m.report)if(typeof r.doneN==='number'&&!r.info)S.counts[r.key]={label:r.label,total:r.count,done:r.doneN,skipped:r.skippedN||0}; // 최종 결과로 건수 확정
     S.pendingPhase=m.type==='applied'?'applied':'scanned';
     if(m.type==='applied'&&S.compare)return; // 전후 비교 이미지가 올 때까지 진행 표시 유지
     showProg('완료',100);finish();

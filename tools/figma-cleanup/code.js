@@ -1,17 +1,29 @@
-// Sketch → Figma 정리 플러그인 (뼈대)
-// 흐름: UI에서 옵션 선택 → 'scan'(미리보기, 아무것도 안 바꿈) → 'apply'(적용) → 리포트
-figma.showUI(__html__, { width: 360, height: 560 });
+// Sketch → Figma 정리 플러그인
+// 흐름: UI에서 범위·작업 선택 → 'scan'(탐색, 아무것도 안 바꿈) → 'apply'(적용) → 리포트
+figma.showUI(__html__, { width: 400, height: 700, themeColors: false });
 
+// 탐색 때 "대신 쓸 폰트"의 기본 추천값으로만 쓰임 (적용은 사용자가 고른 것만)
 const DEFAULT_FONT_MAP = {
   NotoSansCJKkr: 'Pretendard Variable',
   'Noto Sans CJK KR': 'Pretendard Variable',
   AppleSDGothicNeo: 'Pretendard Variable',
+  SpoqaHanSans: 'Pretendard Variable',
   Pretendard: 'Pretendard Variable',
   PretendardVariable: 'Pretendard Variable',
   NanumBarunpen: 'Pretendard Variable',
   SFProText: 'SF Pro',
   SFPro: 'SF Pro',
 };
+
+// ---- 진행률 ---------------------------------------------------
+const PROG = { i: 0, n: 1, last: -1, lastLabel: '' };
+async function prog(label, frac) {
+  const pct = Math.min(99, Math.round(((PROG.i + (frac || 0)) / PROG.n) * 100));
+  if (pct === PROG.last && label === PROG.lastLabel) return;
+  PROG.last = pct; PROG.lastLabel = label;
+  figma.ui.postMessage({ type: 'progress', label, pct });
+  await new Promise((r) => setTimeout(r, 0)); // UI가 그릴 틈을 줌
+}
 
 async function getPages(scope) {
   if (scope === 'all') {
@@ -21,40 +33,105 @@ async function getPages(scope) {
   return [figma.currentPage];
 }
 
-// ---- 1. 폰트 -------------------------------------------------
-async function fontStep(pages, map, apply) {
-  let texts = 0, segs = 0, fixed = 0;
-  const failed = [];
-  for (const page of pages) {
-    for (const t of page.findAllWithCriteria({ types: ['TEXT'] })) {
-      const segments = t.getStyledTextSegments(['fontName']);
-      const bad = segments.filter((s) => map[s.fontName.family]);
-      if (!bad.length) continue;
-      texts++; segs += bad.length;
-      if (!apply) continue;
-      try {
-        // 누락 폰트는 setRangeFontName이 막히므로: 통째 지정 → 구간별 복원
-        const first = bad[0];
-        const fam0 = map[first.fontName.family];
-        await figma.loadFontAsync({ family: fam0, style: first.fontName.style });
-        t.fontName = { family: fam0, style: first.fontName.style };
-        for (const s of segments) {
-          const fam = map[s.fontName.family] || s.fontName.family;
-          const f = { family: fam, style: s.fontName.style };
-          await figma.loadFontAsync(f);
-          t.setRangeFontName(s.start, s.end, f);
-        }
-        fixed++;
-      } catch (e) {
-        failed.push(t.id + ': ' + String(e.message).slice(0, 60));
-      }
-    }
+// ---- 설치된 폰트 목록 (내 PC + Figma 폰트) --------------------
+let FONT_CACHE = null;
+async function fontIndex() {
+  if (FONT_CACHE) return FONT_CACHE;
+  const list = await figma.listAvailableFontsAsync();
+  const famStyles = {};
+  for (const f of list) (famStyles[f.fontName.family] = famStyles[f.fontName.family] || []).push(f.fontName.style);
+  FONT_CACHE = famStyles;
+  return famStyles;
+}
+const norm = (s) => String(s).toLowerCase().replace(/[\s_-]/g, '');
+const WEIGHTS = [['extralight', 200], ['ultralight', 200], ['thin', 100], ['light', 300], ['regular', 400], ['book', 400], ['normal', 400],
+  ['medium', 500], ['semibold', 600], ['demibold', 600], ['extrabold', 800], ['ultrabold', 800], ['heavy', 800], ['bold', 700], ['black', 900]];
+function weightOf(style) {
+  const n = norm(style);
+  for (const [k, w] of WEIGHTS) if (n.includes(k)) return w;
+  return 400;
+}
+// 원래 굵기(style)와 가장 가까운 스타일을 대상 폰트에서 고름
+function pickStyle(famStyles, target, wanted) {
+  const styles = famStyles[target] || [];
+  if (!styles.length) return wanted;
+  const exact = styles.find((s) => norm(s) === norm(wanted));
+  if (exact) return exact;
+  const wantItalic = /italic|oblique/i.test(wanted);
+  const w = weightOf(wanted);
+  let best = styles[0], bd = 1e9;
+  for (const s of styles) {
+    const d = Math.abs(weightOf(s) - w) + (/italic|oblique/i.test(s) === wantItalic ? 0 : 1000);
+    if (d < bd) { bd = d; best = s; }
   }
-  return { label: '누락 폰트 교체', found: texts + '개 텍스트 (' + segs + '구간)', done: apply ? fixed + '개 교체' : null, failed };
+  return best;
+}
+
+// ---- 1. 폰트 -------------------------------------------------
+// 탐색: 사용 중인 폰트를 모두 모아 "없는 폰트"를 표시. 적용: 사용자가 고른 대체 폰트로 교체.
+async function fontStep(pages, userMap, apply) {
+  const famStyles = await fontIndex();
+  const has = (f) => (famStyles[f.family] || []).includes(f.style);
+  const texts = [];
+  for (const page of pages) texts.push(...page.findAllWithCriteria({ types: ['TEXT'] }));
+  const usage = {}; // family -> { count, texts, styles, missing }
+  for (let i = 0; i < texts.length; i++) {
+    const seenInText = {};
+    for (const s of texts[i].getStyledTextSegments(['fontName'])) {
+      const fam = s.fontName.family;
+      const u = usage[fam] || (usage[fam] = { family: fam, count: 0, texts: 0, styles: {}, missing: false });
+      u.count++; u.styles[s.fontName.style] = 1;
+      if (!seenInText[fam]) { u.texts++; seenInText[fam] = 1; }
+      if (!has(s.fontName)) u.missing = true;
+    }
+    if (i % 40 === 0) await prog('사용 중인 폰트 찾는 중', (i / texts.length) * (apply ? 0.3 : 1));
+  }
+  const fonts = Object.values(usage).map((u) => ({
+    family: u.family, texts: u.texts, styles: Object.keys(u.styles), missing: u.missing,
+    suggest: u.missing ? (DEFAULT_FONT_MAP[u.family] || null) : null,
+  })).sort((a, b) => (b.missing - a.missing) || (b.texts - a.texts));
+  const missing = fonts.filter((f) => f.missing);
+  const missingTexts = missing.reduce((n, f) => n + f.texts, 0);
+  const base = { label: '폰트 교체', fonts, failed: [] };
+  if (!apply) return Object.assign(base, { found: '없는 폰트 ' + missing.length + '종 · 텍스트 ' + missingTexts + '개 (전체 ' + fonts.length + '종 사용 중)', done: null });
+
+  const chosen = Object.keys(userMap || {}).filter((k) => userMap[k]);
+  if (!chosen.length) return Object.assign(base, { found: '없는 폰트 ' + missing.length + '종', done: '교체할 폰트를 고르지 않아 건너뜀' });
+  let fixed = 0, partial = 0;
+  const failed = [];
+  for (let i = 0; i < texts.length; i++) {
+    const t = texts[i];
+    if (i % 25 === 0) await prog('폰트 바꾸는 중', 0.3 + (i / texts.length) * 0.7);
+    try {
+      const segments = t.getStyledTextSegments(['fontName']);
+      const mapped = segments.filter((s) => userMap[s.fontName.family]);
+      if (!mapped.length) continue;
+      // 고르지 않은 '없는 폰트'가 같이 있으면 원래 모양을 복원할 수 없어 건너뜀
+      if (segments.some((s) => !userMap[s.fontName.family] && !has(s.fontName))) { partial++; continue; }
+      const resolve = (s) => {
+        const tgt = userMap[s.fontName.family];
+        return tgt ? { family: tgt, style: pickStyle(famStyles, tgt, s.fontName.style) } : s.fontName;
+      };
+      const first = resolve(mapped[0]);
+      await figma.loadFontAsync(first);
+      t.fontName = first; // 누락 폰트는 setRangeFontName이 막히므로: 통째 지정 → 구간별 복원
+      for (const s of segments) {
+        const f = resolve(s);
+        await figma.loadFontAsync(f);
+        t.setRangeFontName(s.start, s.end, f);
+      }
+      fixed++;
+    } catch (e) { failed.push(t.id + ': ' + String(e.message).slice(0, 60)); }
+  }
+  return Object.assign(base, {
+    found: '없는 폰트 ' + missing.length + '종', failed,
+    done: fixed + '개 텍스트 교체' + (partial ? ' (고르지 않은 폰트가 섞인 ' + partial + '개는 건너뜀)' : ''),
+  });
 }
 
 // ---- 2. 슬라이스 ---------------------------------------------
 async function sliceStep(pages, apply) {
+  await prog('슬라이스 찾는 중', 0.1);
   let found = 0, removed = 0, skipped = 0;
   for (const page of pages) {
     for (const s of page.findAllWithCriteria({ types: ['SLICE'] })) {
@@ -68,6 +145,7 @@ async function sliceStep(pages, apply) {
 
 // ---- 3. 숨김 레이어 ------------------------------------------
 async function hiddenStep(pages, apply) {
+  await prog('숨김 레이어 찾는 중', 0.1);
   let found = 0, removed = 0, skipped = 0;
   for (const page of pages) {
     const hidden = page.findAll((n) => n.visible === false && n.type !== 'COMPONENT' && n.type !== 'COMPONENT_SET');
@@ -85,6 +163,7 @@ async function hiddenStep(pages, apply) {
 // ---- 4. 아이콘·로고 마스터의 배경 fill -----------------------
 // 이름이 ic/·icon·logo 로 시작하는 컴포넌트의 자체 fill 제거
 async function iconBgStep(pages, apply) {
+  await prog('아이콘 배경 찾는 중', 0.1);
   let found = 0, done = 0;
   const names = [];
   for (const page of pages) {
@@ -95,7 +174,7 @@ async function iconBgStep(pages, apply) {
       if (apply) { c.fills = []; done++; }
     }
   }
-  return { label: '아이콘·로고 배경 fill 제거', found: found + '개', done: apply ? done + '개 제거' : null, failed: [], detail: names.slice(0, 20) };
+  return { label: '아이콘·로고 배경 제거', found: found + '개', done: apply ? done + '개 제거' : null, failed: [], detail: names.slice(0, 20) };
 }
 
 // ---- 5. Sketch 마스크 모서리 보정 ----------------------------
@@ -111,6 +190,7 @@ function sameArea(a, b) {
          Math.abs(a.width - b.width) < 1.5 && Math.abs(a.height - b.height) < 1.5;
 }
 async function maskStep(pages, apply) {
+  await prog('마스크 모서리 확인 중', 0.1);
   let found = 0, done = 0, skippedReal = 0, skippedOther = 0;
   const detail = [];
   for (const page of pages) {
@@ -130,7 +210,7 @@ async function maskStep(pages, apply) {
       done++;
     }
   }
-  return { label: 'Sketch 마스크 모서리 보정', found: found + '곳', done: apply ? done + '곳 적용' : null, failed: [],
+  return { label: '마스크 모서리 보정', found: found + '곳', done: apply ? done + '곳 적용' : null, failed: [],
     detail: detail.concat(['(이미 마스크로 동작 ' + skippedReal + ', 대상 아님 ' + skippedOther + ')']) };
 }
 
@@ -160,8 +240,9 @@ function sameBytes(a, b) {
 async function dupStep(pages, apply) {
   const skipTypes = ['INSTANCE', 'COMPONENT', 'COMPONENT_SET', 'GROUP', 'FRAME', 'SECTION'];
   const cands = [];
-  for (const page of pages) {
-    for (const parent of page.findAll((n) => 'children' in n && n.type !== 'INSTANCE')) {
+  for (let pi = 0; pi < pages.length; pi++) {
+    await prog('중복 후보 찾는 중', (pi / pages.length) * (apply ? 0.3 : 1));
+    for (const parent of pages[pi].findAll((n) => 'children' in n && n.type !== 'INSTANCE')) {
       const seen = {};
       for (const k of parent.children) {
         if (skipTypes.includes(k.type) || ('isMask' in k && k.isMask) || k.visible === false) continue;
@@ -175,7 +256,9 @@ async function dupStep(pages, apply) {
   const failed = [];
   if (apply) {
     const baseline = {}; // 프레임 id → 기준 PNG
-    for (const k of cands) {
+    for (let i = 0; i < cands.length; i++) {
+      const k = cands[i];
+      await prog('중복 레이어 화면 비교 중', 0.3 + (i / cands.length) * 0.7);
       try {
         const root = rootFrame(k);
         if (!baseline[root.id]) baseline[root.id] = await root.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 1 } });
@@ -212,37 +295,39 @@ function isWhitePaint(f) {
 }
 async function faintIconStep(pages, apply) {
   const items = [];
-  for (const page of pages) {
-    for (const c of page.findAllWithCriteria({ types: ['COMPONENT'] })) {
-      if (c.width > 64 || c.height > 64) continue;
-      if (c.parent && c.parent.type === 'COMPONENT_SET') continue;
-      const own = visiblePaints(c);
-      if (own.some((f) => !isWhitePaint(f))) continue; // 자체 색 배경 있음
-      const leaves = c.findAll((k) => LEAF_TYPES.includes(k.type) && !('isMask' in k && k.isMask));
-      if (!leaves.length) continue;
-      let white = 0, colored = 0, bg = false;
-      for (const k of leaves) {
-        const paints = visiblePaints(k);
-        if (!paints.length) continue;
-        if (paints.every(isWhitePaint)) { white++; continue; }
-        colored++;
-        if (k.width * k.height >= c.width * c.height * 0.5 && 'fills' in k && k.fills !== figma.mixed && k.fills.some((f) => f.visible !== false && !isWhitePaint(f))) bg = true;
-      }
-      if (bg || colored > 0) continue;
-      if (white === 0 && own.length === 0 && /^(ic|icon)/i.test(c.name) === false) continue; // 아이콘 이름 아닌 빈 컴포넌트는 제외
-      const reason = white > 0 ? '흰색만 있음' : '보이는 칠·선 없음';
-      let uses = 0;
-      try { uses = (await c.getInstancesAsync()).length; } catch (e) {}
-      items.push({ id: c.id, name: c.name, note: reason + ' · 사용처 ' + uses });
+  const comps = [];
+  for (const page of pages) comps.push(...page.findAllWithCriteria({ types: ['COMPONENT'] }));
+  for (let i = 0; i < comps.length; i++) {
+    const c = comps[i];
+    if (i % 20 === 0) await prog('색 빠진 아이콘 찾는 중', i / comps.length);
+    if (c.width > 64 || c.height > 64) continue;
+    if (c.parent && c.parent.type === 'COMPONENT_SET') continue;
+    const own = visiblePaints(c);
+    if (own.some((f) => !isWhitePaint(f))) continue; // 자체 색 배경 있음
+    const leaves = c.findAll((k) => LEAF_TYPES.includes(k.type) && !('isMask' in k && k.isMask));
+    if (!leaves.length) continue;
+    let white = 0, colored = 0, bg = false;
+    for (const k of leaves) {
+      const paints = visiblePaints(k);
+      if (!paints.length) continue;
+      if (paints.every(isWhitePaint)) { white++; continue; }
+      colored++;
+      if (k.width * k.height >= c.width * c.height * 0.5 && 'fills' in k && k.fills !== figma.mixed && k.fills.some((f) => f.visible !== false && !isWhitePaint(f))) bg = true;
     }
+    if (bg || colored > 0) continue;
+    if (white === 0 && own.length === 0 && /^(ic|icon)/i.test(c.name) === false) continue; // 아이콘 이름 아닌 빈 컴포넌트는 제외
+    const reason = white > 0 ? '흰색만 있음' : '보이는 칠·선 없음';
+    let uses = 0;
+    try { uses = (await c.getInstancesAsync()).length; } catch (e) {}
+    items.push({ id: c.id, name: c.name, note: reason + ' · 사용처 ' + uses });
   }
-  return { label: '색 빠진 아이콘 후보 (목록만)', found: items.length + '개', done: null, failed: [], items: items.slice(0, 60) };
+  return { label: '색 빠진 아이콘 후보', found: items.length + '개 (목록만)', done: null, failed: [], items: items.slice(0, 60) };
 }
 
 // ---- 정리 전후 화면 비교 ---------------------------------------
 // 대상: 선택한 최상위 프레임이 있으면 그것, 없으면 범위 안 페이지들의 최상위 프레임(최대 MAX_FRAMES개)
 const MAX_FRAMES = 12;
-async function snapshot(pages, ids) {
+async function snapshot(pages, ids, label) {
   let frames = [];
   if (ids) {
     for (const id of ids) { const n = await figma.getNodeByIdAsync(id); if (n && n.removed !== true) frames.push(n); }
@@ -254,10 +339,11 @@ async function snapshot(pages, ids) {
   const total = frames.length;
   frames = frames.slice(0, MAX_FRAMES);
   const out = [];
-  for (const f of frames) {
+  for (let i = 0; i < frames.length; i++) {
+    await prog(label, i / frames.length);
     try {
-      const bytes = await f.exportAsync({ format: 'PNG', constraint: { type: 'WIDTH', value: 360 } });
-      out.push({ id: f.id, name: f.name, bytes });
+      const bytes = await frames[i].exportAsync({ format: 'PNG', constraint: { type: 'WIDTH', value: 360 } });
+      out.push({ id: frames[i].id, name: frames[i].name, bytes });
     } catch (e) { /* 내보낼 수 없는 노드는 건너뜀 */ }
   }
   return { items: out, total };
@@ -271,60 +357,81 @@ async function snapshot(pages, ids) {
 async function textWidthStep(pages, apply) {
   const items = []; let done = 0, skipped = 0;
   const failed = [];
-  for (const page of pages) {
-    for (const t of page.findAllWithCriteria({ types: ['TEXT'] })) {
-      if (t.textAutoResize !== 'NONE' || /\s/.test(t.characters.trim()) || insideInstance(t)) continue;
-      try {
-        for (const sg of t.getStyledTextSegments(['fontName'])) await figma.loadFontAsync(sg.fontName);
-        const a = t.clone(); a.textAutoResize = 'WIDTH_AND_HEIGHT'; const nw = a.width, nh = a.height; a.remove();
-        const b = t.clone(); b.textAutoResize = 'HEIGHT'; const wh = b.height; b.remove();
-        if (!(nw > t.width + 0.01 && wh > nh * 1.4)) continue;
-        const target = Math.ceil(nw - 0.001);
-        items.push({ id: t.id, name: t.characters.slice(0, 14), note: t.width + ' → ' + target + 'px' });
-        if (!apply) continue;
-        const delta = target - t.width;
-        const inAuto = t.parent && 'layoutMode' in t.parent && t.parent.layoutMode !== 'NONE' && t.layoutPositioning !== 'ABSOLUTE';
-        const x = t.x;
-        t.resize(target, t.height);
-        if (!inAuto) {
-          if (t.textAlignHorizontal === 'RIGHT') t.x = x - delta;
-          else if (t.textAlignHorizontal === 'CENTER') t.x = x - delta / 2;
-        }
-        done++;
-      } catch (e) { skipped++; failed.push(t.id + ': ' + String(e.message).slice(0, 60)); }
-    }
+  const texts = [];
+  for (const page of pages) texts.push(...page.findAllWithCriteria({ types: ['TEXT'] }));
+  for (let i = 0; i < texts.length; i++) {
+    const t = texts[i];
+    if (i % 20 === 0) await prog('고정폭 텍스트 확인 중', i / texts.length);
+    if (t.textAutoResize !== 'NONE' || /\s/.test(t.characters.trim()) || insideInstance(t)) continue;
+    try {
+      for (const sg of t.getStyledTextSegments(['fontName'])) await figma.loadFontAsync(sg.fontName);
+      const a = t.clone(); a.textAutoResize = 'WIDTH_AND_HEIGHT'; const nw = a.width, nh = a.height; a.remove();
+      const b = t.clone(); b.textAutoResize = 'HEIGHT'; const wh = b.height; b.remove();
+      if (!(nw > t.width + 0.01 && wh > nh * 1.4)) continue;
+      const target = Math.ceil(nw - 0.001);
+      items.push({ id: t.id, name: t.characters.slice(0, 14), note: t.width + ' → ' + target + 'px' });
+      if (!apply) continue;
+      const delta = target - t.width;
+      const inAuto = t.parent && 'layoutMode' in t.parent && t.parent.layoutMode !== 'NONE' && t.layoutPositioning !== 'ABSOLUTE';
+      const x = t.x;
+      t.resize(target, t.height);
+      if (!inAuto) {
+        if (t.textAlignHorizontal === 'RIGHT') t.x = x - delta;
+        else if (t.textAlignHorizontal === 'CENTER') t.x = x - delta / 2;
+      }
+      done++;
+    } catch (e) { skipped++; failed.push(t.id + ': ' + String(e.message).slice(0, 60)); }
   }
-  return { label: '고정폭 텍스트 줄바꿈 보정', found: items.length + '곳', done: apply ? done + '곳 보정 (건너뜀 ' + skipped + ')' : null, failed, items: items.slice(0, 40) };
+  return { label: '고정폭 텍스트 보정', found: items.length + '곳', done: apply ? done + '곳 보정 (건너뜀 ' + skipped + ')' : null, failed, items: items.slice(0, 40) };
 }
 
-async function run(msg, apply) {
+// ---- 실행 -----------------------------------------------------
+const STEP_LIST = [
+  ['fonts', (p, a, m) => fontStep(p, m.fontMap, a)],
+  ['slices', (p, a) => sliceStep(p, a)],
+  ['hidden', (p, a) => hiddenStep(p, a)],
+  ['iconBg', (p, a) => iconBgStep(p, a)],
+  ['masks', (p, a) => maskStep(p, a)],
+  ['dupes', (p, a) => dupStep(p, a)],
+  ['faint', (p, a) => faintIconStep(p, a)],
+  ['textw', (p, a) => textWidthStep(p, a)],
+];
+
+async function run(msg, apply, stageOffset, stageTotal) {
   const pages = await getPages(msg.scope);
-  const map = Object.assign({}, DEFAULT_FONT_MAP, msg.fontMap || {});
+  const active = STEP_LIST.filter(([k]) => msg.steps[k]);
+  PROG.n = stageTotal || active.length || 1;
+  PROG.i = stageOffset || 0;
   const report = [];
-  if (msg.steps.fonts) report.push(await fontStep(pages, map, apply));
-  if (msg.steps.slices) report.push(await sliceStep(pages, apply));
-  if (msg.steps.hidden) report.push(await hiddenStep(pages, apply));
-  if (msg.steps.iconBg) report.push(await iconBgStep(pages, apply));
-  if (msg.steps.masks) report.push(await maskStep(pages, apply));
-  if (msg.steps.dupes) report.push(await dupStep(pages, apply));
-  if (msg.steps.faint) report.push(await faintIconStep(pages, apply));
-  if (msg.steps.textw) report.push(await textWidthStep(pages, apply));
+  for (const [key, fn] of active) {
+    report.push(await fn(pages, apply, msg));
+    PROG.i++;
+  }
+  if (!(apply && msg.compare)) figma.ui.postMessage({ type: 'progress', label: '마무리하는 중', pct: 100 }); // 전후 비교가 남았으면 100%를 미룸
   figma.ui.postMessage({ type: apply ? 'applied' : 'scanned', report, pages: pages.length, file: figma.root.name, scope: msg.scope });
 }
 
 figma.ui.onmessage = async (msg) => {
   try {
-    if (msg.type === 'init') figma.ui.postMessage({ type: 'defaults', fontMap: DEFAULT_FONT_MAP });
-    if (msg.type === 'scan') await run(msg, false);
+    if (msg.type === 'init') {
+      const fi = await fontIndex();
+      figma.ui.postMessage({ type: 'init', families: Object.keys(fi).sort((a, b) => a.localeCompare(b)), file: figma.root.name });
+    }
+    if (msg.type === 'scan') { PROG.last = -1; await run(msg, false); }
     if (msg.type === 'apply') {
+      PROG.last = -1;
+      const active = STEP_LIST.filter(([k]) => msg.steps[k]).length;
+      const total = active + (msg.compare ? 2 : 0);
       let before = null;
       if (msg.compare) {
         const pages = await getPages(msg.scope);
-        before = await snapshot(pages, null);
+        PROG.n = total; PROG.i = 0;
+        before = await snapshot(pages, null, '정리 전 화면 저장 중');
       }
-      await run(msg, true);
+      await run(msg, true, msg.compare ? 1 : 0, total);
       if (before) {
-        const after = await snapshot(null, before.items.map((i) => i.id));
+        PROG.n = total; PROG.i = total - 1;
+        const after = await snapshot(null, before.items.map((i) => i.id), '정리 후 화면 저장 중');
         const pairs = before.items.map((b) => {
           const a = after.items.find((x) => x.id === b.id);
           return a ? { id: b.id, name: b.name, before: b.bytes, after: a.bytes } : null;

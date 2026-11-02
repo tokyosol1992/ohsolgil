@@ -98,6 +98,42 @@ async function iconBgStep(pages, apply) {
   return { label: '아이콘·로고 배경 fill 제거', found: found + '개', done: apply ? done + '개 제거' : null, failed: [], detail: names.slice(0, 20) };
 }
 
+// ---- 5. Sketch 마스크 모서리 보정 ----------------------------
+// Sketch의 둥근 마스크가 Figma에서 적용 안 돼 직각으로 나올 때:
+// 모서리 반경이 있는 'Mask' 사각형(실제 마스크 isMask=false) 바로 위 형제가
+// 같은 영역을 덮고 모서리가 0이면 → 반경을 직접 복사 + 프레임은 clipsContent
+function insideInstance(n) {
+  for (let p = n.parent; p; p = p.parent) if (p.type === 'INSTANCE') return true;
+  return false;
+}
+function sameArea(a, b) {
+  return Math.abs(a.x - b.x) < 1.5 && Math.abs(a.y - b.y) < 1.5 &&
+         Math.abs(a.width - b.width) < 1.5 && Math.abs(a.height - b.height) < 1.5;
+}
+async function maskStep(pages, apply) {
+  let found = 0, done = 0, skippedReal = 0, skippedOther = 0;
+  const detail = [];
+  for (const page of pages) {
+    for (const m of page.findAllWithCriteria({ types: ['RECTANGLE'] })) {
+      if (!/mask/i.test(m.name) || insideInstance(m)) continue;
+      if (m.cornerRadius === figma.mixed || !(m.cornerRadius > 0)) continue;
+      if (m.isMask) { skippedReal++; continue; } // 이미 Figma 마스크로 동작 중 → 건드리지 않음
+      const sibs = m.parent.children;
+      const target = sibs.slice(sibs.indexOf(m) + 1).find((n) => n.visible !== false);
+      if (!target || !sameArea(m, target) || !('cornerRadius' in target) ||
+          target.cornerRadius === figma.mixed || target.cornerRadius > 0) { skippedOther++; continue; }
+      found++;
+      if (detail.length < 15) detail.push(target.name + ' → ' + m.cornerRadius);
+      if (!apply) continue;
+      target.cornerRadius = m.cornerRadius;
+      if (target.type === 'FRAME') target.clipsContent = true;
+      done++;
+    }
+  }
+  return { label: 'Sketch 마스크 모서리 보정', found: found + '곳', done: apply ? done + '곳 적용' : null, failed: [],
+    detail: detail.concat(['(이미 마스크로 동작 ' + skippedReal + ', 대상 아님 ' + skippedOther + ')']) };
+}
+
 async function run(msg, apply) {
   const pages = await getPages(msg.scope);
   const map = Object.assign({}, DEFAULT_FONT_MAP, msg.fontMap || {});
@@ -106,6 +142,7 @@ async function run(msg, apply) {
   if (msg.steps.slices) report.push(await sliceStep(pages, apply));
   if (msg.steps.hidden) report.push(await hiddenStep(pages, apply));
   if (msg.steps.iconBg) report.push(await iconBgStep(pages, apply));
+  if (msg.steps.masks) report.push(await maskStep(pages, apply));
   figma.ui.postMessage({ type: apply ? 'applied' : 'scanned', report, pages: pages.length });
 }
 

@@ -1,5 +1,7 @@
 # Sketch Cleanup (Figma 플러그인 뼈대)
 
+**현재 버전: v0.3.0** · 변경 기록은 `CHANGELOG.md`, 지난 버전은 git 태그 `figma-cleanup-vX.Y.Z`
+
 Sketch → Figma로 넘어온 파일의 반복 정리 작업을 한 번에 처리합니다. 기본은 **미리보기 → 적용** 순서입니다.
 
 ## 불러오기 (로컬 개발)

@@ -73,7 +73,7 @@ async function hiddenStep(pages, apply) {
     const hidden = page.findAll((n) => n.visible === false && n.type !== 'COMPONENT' && n.type !== 'COMPONENT_SET');
     for (const n of hidden) {
       // 숨김 노드의 자식은 따로 세지 않음 (부모가 삭제되면 같이 사라짐)
-      if (n.parent && n.parent.visible === false) continue;
+      if (n.removed || (n.parent && n.parent.visible === false)) continue;
       found++;
       if (!apply) continue;
       try { n.remove(); removed++; } catch (e) { skipped++; }
@@ -170,6 +170,7 @@ async function dupStep(pages, apply) {
       }
     }
   }
+  const detail = cands.slice(0, 15).map((n) => n.name + ' (' + n.type + ')'); // 삭제 전에 읽어 둠
   let removed = 0, restored = 0;
   const failed = [];
   if (apply) {
@@ -190,7 +191,7 @@ async function dupStep(pages, apply) {
   }
   return { label: '중복 레이어 점검', found: cands.length + '개 후보',
     done: apply ? removed + '개 삭제 (화면이 달라져 복구 ' + restored + ')' : null, failed,
-    detail: cands.slice(0, 15).map((n) => n.name + ' (' + n.type + ')') };
+    detail };
 }
 
 // ---- 7. 색 빠진 아이콘 후보 (목록만, 수정 안 함) -----------------
@@ -262,6 +263,40 @@ async function snapshot(pages, ids) {
   return { items: out, total };
 }
 
+// ---- 8. 고정폭 텍스트 줄바꿈 보정 ------------------------------
+// Sketch 박스 폭(예: 50)이 가져오며 반올림돼 49가 되면 "19,800"이 "19,80 / 0"으로 두 줄이 됨.
+// 대상: 폭·높이 고정(NONE)이고 공백이 없는 짧은 텍스트 중, 자연 폭이 현재 폭보다 크고 실제로 줄바꿈되는 것.
+// 보정: 폭을 필요한 만큼(올림) 늘림. 정렬 기준은 유지 — 오른쪽 정렬은 오른쪽 끝, 가운데는 중심 고정.
+// 인스턴스 안의 텍스트는 마스터에서 고쳐야 하므로 건너뜀. 오토레이아웃 자식은 레이아웃이 위치를 잡음.
+async function textWidthStep(pages, apply) {
+  const items = []; let done = 0, skipped = 0;
+  const failed = [];
+  for (const page of pages) {
+    for (const t of page.findAllWithCriteria({ types: ['TEXT'] })) {
+      if (t.textAutoResize !== 'NONE' || /\s/.test(t.characters.trim()) || insideInstance(t)) continue;
+      try {
+        for (const sg of t.getStyledTextSegments(['fontName'])) await figma.loadFontAsync(sg.fontName);
+        const a = t.clone(); a.textAutoResize = 'WIDTH_AND_HEIGHT'; const nw = a.width, nh = a.height; a.remove();
+        const b = t.clone(); b.textAutoResize = 'HEIGHT'; const wh = b.height; b.remove();
+        if (!(nw > t.width + 0.01 && wh > nh * 1.4)) continue;
+        const target = Math.ceil(nw - 0.001);
+        items.push({ id: t.id, name: t.characters.slice(0, 14), note: t.width + ' → ' + target + 'px' });
+        if (!apply) continue;
+        const delta = target - t.width;
+        const inAuto = t.parent && 'layoutMode' in t.parent && t.parent.layoutMode !== 'NONE' && t.layoutPositioning !== 'ABSOLUTE';
+        const x = t.x;
+        t.resize(target, t.height);
+        if (!inAuto) {
+          if (t.textAlignHorizontal === 'RIGHT') t.x = x - delta;
+          else if (t.textAlignHorizontal === 'CENTER') t.x = x - delta / 2;
+        }
+        done++;
+      } catch (e) { skipped++; failed.push(t.id + ': ' + String(e.message).slice(0, 60)); }
+    }
+  }
+  return { label: '고정폭 텍스트 줄바꿈 보정', found: items.length + '곳', done: apply ? done + '곳 보정 (건너뜀 ' + skipped + ')' : null, failed, items: items.slice(0, 40) };
+}
+
 async function run(msg, apply) {
   const pages = await getPages(msg.scope);
   const map = Object.assign({}, DEFAULT_FONT_MAP, msg.fontMap || {});
@@ -273,6 +308,7 @@ async function run(msg, apply) {
   if (msg.steps.masks) report.push(await maskStep(pages, apply));
   if (msg.steps.dupes) report.push(await dupStep(pages, apply));
   if (msg.steps.faint) report.push(await faintIconStep(pages, apply));
+  if (msg.steps.textw) report.push(await textWidthStep(pages, apply));
   figma.ui.postMessage({ type: apply ? 'applied' : 'scanned', report, pages: pages.length, file: figma.root.name, scope: msg.scope });
 }
 

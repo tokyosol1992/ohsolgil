@@ -23,6 +23,7 @@
 <label><input type="checkbox" id="iconBg"> 아이콘·로고 배경 fill 제거</label>
 <label><input type="checkbox" id="masks"> Sketch 마스크 모서리 보정</label>
 <label><input type="checkbox" id="faint"> 색 빠진 아이콘 후보 <span class="muted">(목록만, 수정 안 함)</span></label>
+<label><input type="checkbox" id="textw"> 고정폭 텍스트 줄바꿈 보정 <span class="muted">(19,800 → 19,80/0 같은 경우)</span></label>
 <label><input type="checkbox" id="compare" checked> 적용 전후 화면 비교 <span class="muted">(프레임 최대 12개)</span></label>
 <label><input type="checkbox" id="dupes"> 중복 레이어 점검 <span class="muted">(적용 시 화면 비교로 느릴 수 있어요)</span></label>
 <h3>폰트 매핑 (원래폰트=바꿀폰트, 한 줄에 하나)</h3>
@@ -44,7 +45,7 @@ function opts(){
   const fontMap={};
   $('map').value.split('\n').forEach(l=>{const i=l.indexOf('=');if(i>0)fontMap[l.slice(0,i).trim()]=l.slice(i+1).trim();});
   return {scope:document.querySelector('[name=scope]:checked').value,
-    steps:{fonts:$('fonts').checked,slices:$('slices').checked,hidden:$('hidden').checked,iconBg:$('iconBg').checked,masks:$('masks').checked,dupes:$('dupes').checked,faint:$('faint').checked},fontMap};
+    steps:{fonts:$('fonts').checked,slices:$('slices').checked,hidden:$('hidden').checked,iconBg:$('iconBg').checked,masks:$('masks').checked,dupes:$('dupes').checked,faint:$('faint').checked,textw:$('textw').checked},fontMap};
 }
 $('scan').onclick=()=>{$('out').textContent='검사 중…';post(Object.assign({type:'scan'},opts()));};
 $('apply').onclick=()=>{

@@ -1,0 +1,53 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body{font:12px/1.5 Inter,system-ui,sans-serif;margin:0;padding:12px;color:#222}
+  h3{font-size:12px;margin:14px 0 6px}
+  label{display:flex;gap:6px;align-items:center;margin:3px 0}
+  textarea{width:100%;height:92px;font:11px/1.4 ui-monospace,monospace;box-sizing:border-box}
+  button{padding:7px 12px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer}
+  button.primary{background:#0d99ff;border-color:#0d99ff;color:#fff}
+  .row{display:flex;gap:8px;margin-top:12px}
+  .card{border:1px solid #e5e5e5;border-radius:6px;padding:8px;margin:6px 0}
+  .card b{display:block}.muted{color:#888}.err{color:#d33}
+</style>
+<h3>범위</h3>
+<label><input type="radio" name="scope" value="page" checked> 현재 페이지</label>
+<label><input type="radio" name="scope" value="all"> 파일 전체 페이지</label>
+<h3>작업</h3>
+<label><input type="checkbox" id="fonts" checked> 누락 폰트 교체</label>
+<label><input type="checkbox" id="slices" checked> 슬라이스 삭제</label>
+<label><input type="checkbox" id="hidden"> 숨김 레이어 삭제</label>
+<label><input type="checkbox" id="iconBg"> 아이콘·로고 배경 fill 제거</label>
+<h3>폰트 매핑 (원래폰트=바꿀폰트, 한 줄에 하나)</h3>
+<textarea id="map"></textarea>
+<div class="row">
+  <button id="scan">미리보기</button>
+  <button id="apply" class="primary" disabled>적용</button>
+</div>
+<div id="out"></div>
+<script>
+const $=id=>document.getElementById(id);
+const post=m=>parent.postMessage({pluginMessage:m},'*');
+function opts(){
+  const fontMap={};
+  $('map').value.split('\n').forEach(l=>{const i=l.indexOf('=');if(i>0)fontMap[l.slice(0,i).trim()]=l.slice(i+1).trim();});
+  return {scope:document.querySelector('[name=scope]:checked').value,
+    steps:{fonts:$('fonts').checked,slices:$('slices').checked,hidden:$('hidden').checked,iconBg:$('iconBg').checked},fontMap};
+}
+$('scan').onclick=()=>{$('out').textContent='검사 중…';post(Object.assign({type:'scan'},opts()));};
+$('apply').onclick=()=>{if(!confirm('미리보기에서 본 항목을 실제로 적용합니다. 계속할까요? (Undo로 되돌릴 수 있어요)'))return;$('out').textContent='적용 중…';post(Object.assign({type:'apply'},opts()));};
+onmessage=e=>{
+  const m=e.data.pluginMessage;if(!m)return;
+  if(m.type==='defaults')$('map').value=Object.entries(m.fontMap).map(([a,b])=>a+'='+b).join('\n');
+  if(m.type==='error'){$('out').innerHTML='<p class="err">'+m.message+'</p>';}
+  if(m.type==='scanned'||m.type==='applied'){
+    $('apply').disabled=m.type==='applied';
+    $('out').innerHTML='<p class="muted">'+(m.type==='scanned'?'미리보기 (아직 아무것도 바꾸지 않았어요)':'적용 완료')+' · '+m.pages+'개 페이지</p>'+
+      m.report.map(r=>'<div class="card"><b>'+r.label+'</b>발견: '+r.found+(r.done?'<br>결과: '+r.done:'')+
+      (r.failed&&r.failed.length?'<br><span class="err">실패 '+r.failed.length+'건</span>':'')+
+      (r.detail&&r.detail.length?'<br><span class="muted">'+r.detail.join(', ')+'</span>':'')+'</div>').join('');
+  }
+};
+post({type:'init'});
+</script>

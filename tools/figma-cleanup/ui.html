@@ -10,6 +10,7 @@
   .row{display:flex;gap:8px;margin-top:12px}
   .card{border:1px solid #e5e5e5;border-radius:6px;padding:8px;margin:6px 0}
   .item{display:block;width:100%;text-align:left;margin:2px 0;padding:4px 6px;font-size:11px}
+  .pair{display:flex;gap:6px;margin:6px 0}.pair figure{margin:0;flex:1}.pair img{width:100%;border:1px solid #e5e5e5}.pair figcaption{font-size:10px;color:#888}
   .card b{display:block}.muted{color:#888}.err{color:#d33}
 </style>
 <h3>범위</h3>
@@ -22,6 +23,7 @@
 <label><input type="checkbox" id="iconBg"> 아이콘·로고 배경 fill 제거</label>
 <label><input type="checkbox" id="masks"> Sketch 마스크 모서리 보정</label>
 <label><input type="checkbox" id="faint"> 색 빠진 아이콘 후보 <span class="muted">(목록만, 수정 안 함)</span></label>
+<label><input type="checkbox" id="compare" checked> 적용 전후 화면 비교 <span class="muted">(프레임 최대 12개)</span></label>
 <label><input type="checkbox" id="dupes"> 중복 레이어 점검 <span class="muted">(적용 시 화면 비교로 느릴 수 있어요)</span></label>
 <h3>폰트 매핑 (원래폰트=바꿀폰트, 한 줄에 하나)</h3>
 <textarea id="map"></textarea>
@@ -40,10 +42,33 @@ function opts(){
     steps:{fonts:$('fonts').checked,slices:$('slices').checked,hidden:$('hidden').checked,iconBg:$('iconBg').checked,masks:$('masks').checked,dupes:$('dupes').checked,faint:$('faint').checked},fontMap};
 }
 $('scan').onclick=()=>{$('out').textContent='검사 중…';post(Object.assign({type:'scan'},opts()));};
-$('apply').onclick=()=>{if(!confirm('미리보기에서 본 항목을 실제로 적용합니다. 계속할까요? (Undo로 되돌릴 수 있어요)'))return;$('out').textContent='적용 중…';post(Object.assign({type:'apply'},opts()));};
+$('apply').onclick=()=>{
+  window.__cmp=null;if(!confirm('미리보기에서 본 항목을 실제로 적용합니다. 계속할까요? (Undo로 되돌릴 수 있어요)'))return;$('out').textContent='적용 중…';post(Object.assign({type:'apply',compare:$('compare').checked},opts()));};
+const url=b=>URL.createObjectURL(new Blob([b],{type:'image/png'}));
+function load(u){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=u;});}
+async function diffPct(ua,ub){
+  const [a,b]=await Promise.all([load(ua),load(ub)]);
+  if(a.width!==b.width||a.height!==b.height)return 100;
+  const c=document.createElement('canvas');c.width=a.width;c.height=a.height;const x=c.getContext('2d',{willReadFrequently:true});
+  x.drawImage(a,0,0);const da=x.getImageData(0,0,c.width,c.height).data;
+  x.clearRect(0,0,c.width,c.height);x.drawImage(b,0,0);const db=x.getImageData(0,0,c.width,c.height).data;
+  let n=0;for(let i=0;i<da.length;i+=4){if(Math.abs(da[i]-db[i])+Math.abs(da[i+1]-db[i+1])+Math.abs(da[i+2]-db[i+2])>48)n++;}
+  return n/(da.length/4)*100;
+}
+async function showCompare(m){
+  let h='<h3>정리 전후 비교 ('+m.shown+(m.total>m.shown?'/'+m.total:'')+'개 프레임)</h3>';
+  for(const p of m.pairs){
+    const ua=url(p.before),ub=url(p.after);const d=await diffPct(ua,ub);
+    h+='<div class="card"><b>'+p.name+'</b><span class="'+(d>5?'err':'muted')+'">'+(d<0.05?'변화 없음':'달라진 픽셀 '+d.toFixed(2)+'%')+'</span>'+
+       '<div class="pair"><figure><img src="'+ua+'"><figcaption>전</figcaption></figure><figure><img src="'+ub+'"><figcaption>후</figcaption></figure></div>'+
+       '<button class="item" data-id="'+p.id+'">Figma에서 보기</button></div>';
+  }
+  $('out').insertAdjacentHTML('beforeend',h);
+}
 onmessage=e=>{
   const m=e.data.pluginMessage;if(!m)return;
   if(m.type==='defaults')$('map').value=Object.entries(m.fontMap).map(([a,b])=>a+'='+b).join('\n');
+  if(m.type==='compare')showCompare(m);
   if(m.type==='error'){$('out').innerHTML='<p class="err">'+m.message+'</p>';}
   if(m.type==='scanned'||m.type==='applied'){
     $('apply').disabled=m.type==='applied';

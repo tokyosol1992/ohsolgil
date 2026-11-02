@@ -238,6 +238,30 @@ async function faintIconStep(pages, apply) {
   return { label: '색 빠진 아이콘 후보 (목록만)', found: items.length + '개', done: null, failed: [], items: items.slice(0, 60) };
 }
 
+// ---- 정리 전후 화면 비교 ---------------------------------------
+// 대상: 선택한 최상위 프레임이 있으면 그것, 없으면 범위 안 페이지들의 최상위 프레임(최대 MAX_FRAMES개)
+const MAX_FRAMES = 12;
+async function snapshot(pages, ids) {
+  let frames = [];
+  if (ids) {
+    for (const id of ids) { const n = await figma.getNodeByIdAsync(id); if (n && n.removed !== true) frames.push(n); }
+  } else {
+    const sel = figma.currentPage.selection.filter((n) => n.parent && n.parent.type === 'PAGE' && 'exportAsync' in n);
+    if (sel.length) frames = sel;
+    else for (const page of pages) frames.push(...page.children.filter((n) => ['FRAME', 'COMPONENT', 'SECTION'].includes(n.type) && n.visible !== false));
+  }
+  const total = frames.length;
+  frames = frames.slice(0, MAX_FRAMES);
+  const out = [];
+  for (const f of frames) {
+    try {
+      const bytes = await f.exportAsync({ format: 'PNG', constraint: { type: 'WIDTH', value: 360 } });
+      out.push({ id: f.id, name: f.name, bytes });
+    } catch (e) { /* 내보낼 수 없는 노드는 건너뜀 */ }
+  }
+  return { items: out, total };
+}
+
 async function run(msg, apply) {
   const pages = await getPages(msg.scope);
   const map = Object.assign({}, DEFAULT_FONT_MAP, msg.fontMap || {});
@@ -256,7 +280,22 @@ figma.ui.onmessage = async (msg) => {
   try {
     if (msg.type === 'init') figma.ui.postMessage({ type: 'defaults', fontMap: DEFAULT_FONT_MAP });
     if (msg.type === 'scan') await run(msg, false);
-    if (msg.type === 'apply') await run(msg, true);
+    if (msg.type === 'apply') {
+      let before = null;
+      if (msg.compare) {
+        const pages = await getPages(msg.scope);
+        before = await snapshot(pages, null);
+      }
+      await run(msg, true);
+      if (before) {
+        const after = await snapshot(null, before.items.map((i) => i.id));
+        const pairs = before.items.map((b) => {
+          const a = after.items.find((x) => x.id === b.id);
+          return a ? { id: b.id, name: b.name, before: b.bytes, after: a.bytes } : null;
+        }).filter(Boolean);
+        figma.ui.postMessage({ type: 'compare', pairs, total: before.total, shown: pairs.length });
+      }
+    }
     if (msg.type === 'select') {
       const nodes = [];
       for (const id of msg.ids) { const n = await figma.getNodeByIdAsync(id); if (n) nodes.push(n); }

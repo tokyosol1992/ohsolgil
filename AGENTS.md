@@ -92,3 +92,5 @@
 - (2026-11-02) **Figma 정리 플러그인 `tools/figma-cleanup/`** (순수 JS, 빌드 없음, 사용법은 폴더의 README.md): 폰트 교체·슬라이스·숨김 레이어·아이콘 배경 fill·Sketch 마스크 모서리·중복 레이어(숨김→PNG 비교)·색 빠진 아이콘 후보(목록만)·정리 전후 화면 비교·리포트 내보내기(.md/JSON/복사). ⚠️ 아직 **Figma에서 실제로 실행해 보지 못함**(문법 검사만) — 처음엔 복사본 파일에서 미리보기부터. 피드백 받으면 수정
 - (2026-11-02) 플러그인 **v0.3.0**: 고정폭 텍스트 줄바꿈 보정 추가(1px 부족으로 `19,800`이 두 줄) + 중복 단계 오류 수정. 버전 ZIP은 `tools/figma-cleanup-releases/figma-cleanup-vX.Y.Z.zip`(태그 푸시는 403으로 막혀 ZIP 커밋으로 보관), 변경 기록은 `tools/figma-cleanup/CHANGELOG.md`. 새 버전을 낼 때마다 ZIP 추가·CHANGELOG 갱신
 - (2026-11-02) Figma 파일 5: `04_주문,결제,장바구니,룰렛,팝업…_And`(fileKey zxqRfZ0F4wRbDH1L1apwmq) 점검 — 슬라이스 0, 폰트 대부분 Pretendard 정리됨. 남은 미설치 폰트: GmarketSansTTF(팝업 큰 제목), RixYeoljeongdoPR("반값쿠폰" 1곳), SpoqaHanSans(Symbols·다이얼로그/드롭다운 약 50곳), Avenir·GothamRounded(Symbols 검색바·타이틀·바텀버튼 영문) → **교체 폰트는 사용자 결정 대기**. 고정폭 줄바꿈 16곳(장바구니 12·룰렛 1·팝업doc 3) 보정 대기
+- (2026-11-02) 플러그인 **v0.4.0**: UI를 다크·토스 스타일로 개편(상단 슬라이딩 범위 탭, `전체 선택` 칩+칩 선택, `미리보기`→`탐색`, 진행률 바). 폰트 교체는 저장 매핑 대신 **탐색 시 쓰는 폰트를 찾아 없는 폰트마다 드롭다운(내 PC·Figma 폰트, 검색)에서 선택**. 적용 확인은 `confirm()`(Figma 플러그인에서 막힘)이 아니라 화면 안 시트. 모의 메시지로 브라우저 렌더링은 확인했지만 **Figma 실기 검증은 아직**
+

@@ -1,6 +1,6 @@
 # 변경 기록 (Sketch Cleanup 플러그인)
 
-버전은 `figma-cleanup-vX.Y.Z` 태그로 보관됩니다. 최신 코드는 `claude/elegant-brown-wdqb3y` 브랜치.
+버전별 ZIP은 `tools/figma-cleanup-releases/`에 보관됩니다. 최신 코드는 `claude/elegant-brown-wdqb3y` 브랜치.
 
 ## v0.3.0 — 2026-11-02
 - 추가: **고정폭 텍스트 줄바꿈 보정** (Sketch 박스 폭이 1px 줄어 `19,800`이 두 줄이 되는 경우)

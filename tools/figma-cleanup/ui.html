@@ -31,6 +31,11 @@
   <button id="scan">미리보기</button>
   <button id="apply" class="primary" disabled>적용</button>
 </div>
+<div id="export" class="row" hidden>
+  <button id="dlMd">리포트 저장 (.md)</button>
+  <button id="dlJson">JSON 저장</button>
+  <button id="cpMd">복사</button>
+</div>
 <div id="out"></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -44,6 +49,36 @@ function opts(){
 $('scan').onclick=()=>{$('out').textContent='검사 중…';post(Object.assign({type:'scan'},opts()));};
 $('apply').onclick=()=>{
   window.__cmp=null;if(!confirm('미리보기에서 본 항목을 실제로 적용합니다. 계속할까요? (Undo로 되돌릴 수 있어요)'))return;$('out').textContent='적용 중…';post(Object.assign({type:'apply',compare:$('compare').checked},opts()));};
+// ---- 리포트 내보내기 ----
+const LAST={meta:null,compare:[]};
+function reportData(){
+  const m=LAST.meta; if(!m)return null;
+  return {file:m.file,mode:m.type==='applied'?'적용':'미리보기',scope:m.scope==='all'?'파일 전체 페이지':'현재 페이지',pages:m.pages,
+    time:new Date().toISOString(),steps:m.report.map(r=>({label:r.label,found:r.found,result:r.done||null,failed:r.failed||[],
+      detail:r.detail||[],items:(r.items||[]).map(i=>i.name+' ('+i.note+')')})),compare:LAST.compare};
+}
+function reportMd(){
+  const d=reportData(); if(!d)return '';
+  let o='# Sketch Cleanup 리포트\n\n- 파일: '+d.file+'\n- 구분: '+d.mode+'\n- 범위: '+d.scope+' ('+d.pages+'개 페이지)\n- 시각: '+d.time+'\n\n';
+  for(const s of d.steps){
+    o+='## '+s.label+'\n\n- 발견: '+s.found+'\n'+(s.result?'- 결과: '+s.result+'\n':'');
+    if(s.failed.length)o+='- 실패 '+s.failed.length+'건\n'+s.failed.map(f=>'  - '+f).join('\n')+'\n';
+    if(s.detail.length)o+='- 참고: '+s.detail.join(', ')+'\n';
+    if(s.items.length)o+='\n'+s.items.map(i=>'  - '+i).join('\n')+'\n';
+    o+='\n';
+  }
+  if(d.compare.length){o+='## 정리 전후 화면 비교\n\n'+d.compare.map(c=>'- '+c.name+': '+(c.diff<0.05?'변화 없음':'달라진 픽셀 '+c.diff.toFixed(2)+'%')).join('\n')+'\n';}
+  return o;
+}
+function save(name,text,type){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+}
+function stamp(){return (LAST.meta&&LAST.meta.file||'figma').replace(/[^\w가-힣-]+/g,'_')+'_cleanup';}
+$('dlMd').onclick=()=>save(stamp()+'.md',reportMd(),'text/markdown');
+$('dlJson').onclick=()=>save(stamp()+'.json',JSON.stringify(reportData(),null,2),'application/json');
+$('cpMd').onclick=()=>{const ta=document.createElement('textarea');ta.value=reportMd();document.body.appendChild(ta);ta.select();
+  const ok=document.execCommand('copy');ta.remove();$('cpMd').textContent=ok?'복사됨 ✓':'복사 실패 — 저장을 이용하세요';setTimeout(()=>$('cpMd').textContent='복사',1800);};
 const url=b=>URL.createObjectURL(new Blob([b],{type:'image/png'}));
 function load(u){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=u;});}
 async function diffPct(ua,ub){
@@ -58,7 +93,7 @@ async function diffPct(ua,ub){
 async function showCompare(m){
   let h='<h3>정리 전후 비교 ('+m.shown+(m.total>m.shown?'/'+m.total:'')+'개 프레임)</h3>';
   for(const p of m.pairs){
-    const ua=url(p.before),ub=url(p.after);const d=await diffPct(ua,ub);
+    const ua=url(p.before),ub=url(p.after);const d=await diffPct(ua,ub);LAST.compare.push({name:p.name,diff:d});
     h+='<div class="card"><b>'+p.name+'</b><span class="'+(d>5?'err':'muted')+'">'+(d<0.05?'변화 없음':'달라진 픽셀 '+d.toFixed(2)+'%')+'</span>'+
        '<div class="pair"><figure><img src="'+ua+'"><figcaption>전</figcaption></figure><figure><img src="'+ub+'"><figcaption>후</figcaption></figure></div>'+
        '<button class="item" data-id="'+p.id+'">Figma에서 보기</button></div>';
@@ -71,6 +106,7 @@ onmessage=e=>{
   if(m.type==='compare')showCompare(m);
   if(m.type==='error'){$('out').innerHTML='<p class="err">'+m.message+'</p>';}
   if(m.type==='scanned'||m.type==='applied'){
+    LAST.meta=m;LAST.compare=[];$('export').hidden=false;
     $('apply').disabled=m.type==='applied';
     $('out').innerHTML='<p class="muted">'+(m.type==='scanned'?'미리보기 (아직 아무것도 바꾸지 않았어요)':'적용 완료')+' · '+m.pages+'개 페이지</p>'+
       m.report.map(r=>'<div class="card"><b>'+r.label+'</b>발견: '+r.found+(r.done?'<br>결과: '+r.done:'')+

@@ -273,7 +273,7 @@ async function run(msg, apply) {
   if (msg.steps.masks) report.push(await maskStep(pages, apply));
   if (msg.steps.dupes) report.push(await dupStep(pages, apply));
   if (msg.steps.faint) report.push(await faintIconStep(pages, apply));
-  figma.ui.postMessage({ type: apply ? 'applied' : 'scanned', report, pages: pages.length });
+  figma.ui.postMessage({ type: apply ? 'applied' : 'scanned', report, pages: pages.length, file: figma.root.name, scope: msg.scope });
 }
 
 figma.ui.onmessage = async (msg) => {

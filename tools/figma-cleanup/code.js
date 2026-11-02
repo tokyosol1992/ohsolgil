@@ -193,6 +193,51 @@ async function dupStep(pages, apply) {
     detail: cands.slice(0, 15).map((n) => n.name + ' (' + n.type + ')') };
 }
 
+// ---- 7. 색 빠진 아이콘 후보 (목록만, 수정 안 함) -----------------
+// 아이콘 크기(<=64)의 컴포넌트 중
+//  (a) 보이는 칠/선이 전부 흰색 → 흰 선·흰 채움만 남은 아이콘
+//  (b) 보이는 칠/선이 하나도 없음 → fill 꺼짐 등으로 안 보이는 아이콘
+// 단, 뒤에 색 배경(아이콘 영역 절반 이상을 덮는 비흰색 칠)이 있으면 정상으로 보고 제외.
+// 흰 아이콘이 색 원 위에 놓이는 경우는 사용처에서 정상일 수 있으니 '사용처 수'를 함께 보여줌.
+const LEAF_TYPES = ['VECTOR', 'BOOLEAN_OPERATION', 'RECTANGLE', 'ELLIPSE', 'STAR', 'POLYGON', 'LINE', 'TEXT'];
+function visiblePaints(n) {
+  const out = [];
+  if ('fills' in n && n.fills !== figma.mixed) for (const f of n.fills) if (f.visible !== false && (f.opacity === undefined || f.opacity > 0)) out.push(f);
+  if ('strokes' in n) for (const f of n.strokes) if (f.visible !== false && (f.opacity === undefined || f.opacity > 0)) out.push(f);
+  return out;
+}
+function isWhitePaint(f) {
+  return f.type === 'SOLID' && f.color.r > 0.95 && f.color.g > 0.95 && f.color.b > 0.95;
+}
+async function faintIconStep(pages, apply) {
+  const items = [];
+  for (const page of pages) {
+    for (const c of page.findAllWithCriteria({ types: ['COMPONENT'] })) {
+      if (c.width > 64 || c.height > 64) continue;
+      if (c.parent && c.parent.type === 'COMPONENT_SET') continue;
+      const own = visiblePaints(c);
+      if (own.some((f) => !isWhitePaint(f))) continue; // 자체 색 배경 있음
+      const leaves = c.findAll((k) => LEAF_TYPES.includes(k.type) && !('isMask' in k && k.isMask));
+      if (!leaves.length) continue;
+      let white = 0, colored = 0, bg = false;
+      for (const k of leaves) {
+        const paints = visiblePaints(k);
+        if (!paints.length) continue;
+        if (paints.every(isWhitePaint)) { white++; continue; }
+        colored++;
+        if (k.width * k.height >= c.width * c.height * 0.5 && 'fills' in k && k.fills !== figma.mixed && k.fills.some((f) => f.visible !== false && !isWhitePaint(f))) bg = true;
+      }
+      if (bg || colored > 0) continue;
+      if (white === 0 && own.length === 0 && /^(ic|icon)/i.test(c.name) === false) continue; // 아이콘 이름 아닌 빈 컴포넌트는 제외
+      const reason = white > 0 ? '흰색만 있음' : '보이는 칠·선 없음';
+      let uses = 0;
+      try { uses = (await c.getInstancesAsync()).length; } catch (e) {}
+      items.push({ id: c.id, name: c.name, note: reason + ' · 사용처 ' + uses });
+    }
+  }
+  return { label: '색 빠진 아이콘 후보 (목록만)', found: items.length + '개', done: null, failed: [], items: items.slice(0, 60) };
+}
+
 async function run(msg, apply) {
   const pages = await getPages(msg.scope);
   const map = Object.assign({}, DEFAULT_FONT_MAP, msg.fontMap || {});
@@ -203,6 +248,7 @@ async function run(msg, apply) {
   if (msg.steps.iconBg) report.push(await iconBgStep(pages, apply));
   if (msg.steps.masks) report.push(await maskStep(pages, apply));
   if (msg.steps.dupes) report.push(await dupStep(pages, apply));
+  if (msg.steps.faint) report.push(await faintIconStep(pages, apply));
   figma.ui.postMessage({ type: apply ? 'applied' : 'scanned', report, pages: pages.length });
 }
 
@@ -211,6 +257,16 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'init') figma.ui.postMessage({ type: 'defaults', fontMap: DEFAULT_FONT_MAP });
     if (msg.type === 'scan') await run(msg, false);
     if (msg.type === 'apply') await run(msg, true);
+    if (msg.type === 'select') {
+      const nodes = [];
+      for (const id of msg.ids) { const n = await figma.getNodeByIdAsync(id); if (n) nodes.push(n); }
+      if (nodes.length) {
+        let page = nodes[0]; while (page && page.type !== 'PAGE') page = page.parent;
+        if (page && page !== figma.currentPage) await figma.setCurrentPageAsync(page);
+        figma.currentPage.selection = nodes;
+        figma.viewport.scrollAndZoomIntoView(nodes);
+      }
+    }
   } catch (e) {
     figma.ui.postMessage({ type: 'error', message: String(e && e.message || e) });
   }

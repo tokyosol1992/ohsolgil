@@ -20,6 +20,7 @@
 <label><input type="checkbox" id="hidden"> 숨김 레이어 삭제</label>
 <label><input type="checkbox" id="iconBg"> 아이콘·로고 배경 fill 제거</label>
 <label><input type="checkbox" id="masks"> Sketch 마스크 모서리 보정</label>
+<label><input type="checkbox" id="dupes"> 중복 레이어 점검 <span class="muted">(적용 시 화면 비교로 느릴 수 있어요)</span></label>
 <h3>폰트 매핑 (원래폰트=바꿀폰트, 한 줄에 하나)</h3>
 <textarea id="map"></textarea>
 <div class="row">
@@ -34,7 +35,7 @@ function opts(){
   const fontMap={};
   $('map').value.split('\n').forEach(l=>{const i=l.indexOf('=');if(i>0)fontMap[l.slice(0,i).trim()]=l.slice(i+1).trim();});
   return {scope:document.querySelector('[name=scope]:checked').value,
-    steps:{fonts:$('fonts').checked,slices:$('slices').checked,hidden:$('hidden').checked,iconBg:$('iconBg').checked,masks:$('masks').checked},fontMap};
+    steps:{fonts:$('fonts').checked,slices:$('slices').checked,hidden:$('hidden').checked,iconBg:$('iconBg').checked,masks:$('masks').checked,dupes:$('dupes').checked},fontMap};
 }
 $('scan').onclick=()=>{$('out').textContent='검사 중…';post(Object.assign({type:'scan'},opts()));};
 $('apply').onclick=()=>{if(!confirm('미리보기에서 본 항목을 실제로 적용합니다. 계속할까요? (Undo로 되돌릴 수 있어요)'))return;$('out').textContent='적용 중…';post(Object.assign({type:'apply'},opts()));};

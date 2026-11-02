@@ -134,6 +134,65 @@ async function maskStep(pages, apply) {
     detail: detail.concat(['(이미 마스크로 동작 ' + skippedReal + ', 대상 아님 ' + skippedOther + ')']) };
 }
 
+// ---- 6. 중복 레이어 (안전 삭제) -------------------------------
+// 같은 부모 안에서 종류·위치·크기·채움·선·모서리(·텍스트 내용)가 모두 같은 형제를 후보로 잡음.
+// 적용: 후보를 숨김 → 맨 위 프레임을 PNG로 내보내 숨기기 전과 바이트 비교
+//       → 같을 때만 삭제, 다르면 되돌림. (그룹·프레임·컴포넌트·인스턴스·마스크는 대상 제외)
+function dupSig(n) {
+  return JSON.stringify([
+    n.type, Math.round(n.x * 10), Math.round(n.y * 10), Math.round(n.width * 10), Math.round(n.height * 10),
+    ('fills' in n && n.fills !== figma.mixed) ? n.fills : null,
+    ('strokes' in n) ? n.strokes : null,
+    ('cornerRadius' in n) ? String(n.cornerRadius) : null,
+    n.type === 'TEXT' ? n.characters : null,
+  ]);
+}
+function rootFrame(n) {
+  let p = n;
+  while (p.parent && p.parent.type !== 'PAGE') p = p.parent;
+  return p;
+}
+function sameBytes(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+async function dupStep(pages, apply) {
+  const skipTypes = ['INSTANCE', 'COMPONENT', 'COMPONENT_SET', 'GROUP', 'FRAME', 'SECTION'];
+  const cands = [];
+  for (const page of pages) {
+    for (const parent of page.findAll((n) => 'children' in n && n.type !== 'INSTANCE')) {
+      const seen = {};
+      for (const k of parent.children) {
+        if (skipTypes.includes(k.type) || ('isMask' in k && k.isMask) || k.visible === false) continue;
+        const sg = dupSig(k);
+        if (seen[sg]) cands.push(k); else seen[sg] = k.id;
+      }
+    }
+  }
+  let removed = 0, restored = 0;
+  const failed = [];
+  if (apply) {
+    const baseline = {}; // 프레임 id → 기준 PNG
+    for (const k of cands) {
+      try {
+        const root = rootFrame(k);
+        if (!baseline[root.id]) baseline[root.id] = await root.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 1 } });
+        k.visible = false;
+        const after = await root.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 1 } });
+        if (sameBytes(baseline[root.id], after)) { k.remove(); removed++; }
+        else { k.visible = true; restored++; }
+      } catch (e) {
+        try { k.visible = true; } catch (_) {}
+        failed.push(k.id + ': ' + String(e.message).slice(0, 60));
+      }
+    }
+  }
+  return { label: '중복 레이어 점검', found: cands.length + '개 후보',
+    done: apply ? removed + '개 삭제 (화면이 달라져 복구 ' + restored + ')' : null, failed,
+    detail: cands.slice(0, 15).map((n) => n.name + ' (' + n.type + ')') };
+}
+
 async function run(msg, apply) {
   const pages = await getPages(msg.scope);
   const map = Object.assign({}, DEFAULT_FONT_MAP, msg.fontMap || {});
@@ -143,6 +202,7 @@ async function run(msg, apply) {
   if (msg.steps.hidden) report.push(await hiddenStep(pages, apply));
   if (msg.steps.iconBg) report.push(await iconBgStep(pages, apply));
   if (msg.steps.masks) report.push(await maskStep(pages, apply));
+  if (msg.steps.dupes) report.push(await dupStep(pages, apply));
   figma.ui.postMessage({ type: apply ? 'applied' : 'scanned', report, pages: pages.length });
 }
 

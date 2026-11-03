@@ -1,3 +1,4 @@
+import { scrollToEl } from './smooth-scroll';
 // 전체 검색 (2026-11-03): 헤더 Search 영역을 누르거나 ⌘K / Ctrl+K → 화면 가운데에 검색창(<dialog>)
 // 색인은 index.astro가 페이지 데이터로 만들어 #sk-data(JSON)에 넣어 둠. 한글 초성 검색 지원(ㄷㅋ → 던킨)
 type Hit = { g: string; t: string; s?: string; k?: string; h: string };
@@ -47,7 +48,6 @@ export function initSearch() {
   if (!dialog || !input || !list || !data || typeof dialog.showModal !== 'function') return;
 
   const index: Hit[] = JSON.parse(data.textContent || '[]');
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let shown: Hit[] = [];
   let active = 0;
 
@@ -123,7 +123,7 @@ export function initSearch() {
     if (!el) return;
     history.pushState(null, '', h.h);
     const isSection = el.tagName === 'SECTION';
-    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: isSection ? 'start' : 'center', inline: 'start' });
+    scrollToEl(el, isSection ? 'start' : 'center');
     el.focus({ preventScroll: true }); // 키보드 사용자는 도착한 곳에서 이어서 Tab
     if (!isSection) {
       el.classList.remove('is-hit');

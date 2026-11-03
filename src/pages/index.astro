@@ -15,6 +15,8 @@ const menu = [
 
 // 기간은 연차 대신 `YYYY - YYYY` / `YYYY.MM.DD` (src/lib/period.ts)
 const career = period('2016', '2025')!;
+// 히어로 숫자 카운트업용 (연도만 쪼갬)
+const careerYears = career.split(' - ');
 
 const about = [
   { n: '01', title: '플랫폼 설계', text: '핵심 역량 문장이 들어갑니다. (직접 정리해 주시는 내용으로 채웁니다)' },
@@ -122,15 +124,15 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
           <a class="btn" href="#projects">프로젝트 보기</a>
         </div>
         <div class="facts">
-          <span><b>{career}</b> 작업 기록</span><span><b>{projects.length}개</b> 대표 프로젝트</span><span>서울</span>
+          <span><b>{careerYears.map((y, i) => <>{i > 0 && ' - '}<i data-countup={y} data-from="2000">{y}</i></>)}</b> 작업 기록</span><span><b><i data-countup={projects.length}>{projects.length}</i>개</b> 대표 프로젝트</span><span>서울</span>
         </div>
       </div>
       </div>
 
       <div class="wrap">
       <section id="about" tabindex="-1">
-        <div class="sh"><h2>About</h2><p>What I do well and how I work</p></div>
-        <div class="grid3">
+        <div class="sh" data-blur><h2>About</h2><p>What I do well and how I work</p></div>
+        <div class="grid3" data-reveal>
           {about.map((a) => (
             <div class="card" id={`about-${a.n}`} tabindex="-1" data-glow><span class="edge-light" aria-hidden="true"></span><div class="ic">{a.n}</div><h3>{a.title}</h3><p class="ph">{a.text}</p></div>
           ))}
@@ -138,8 +140,8 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
       </section>
 
       <section id="experience" tabindex="-1">
-        <div class="sh"><h2>Experience</h2><p>{career}</p></div>
-        <div class="tl">
+        <div class="sh" data-blur><h2>Experience</h2><p>{career}</p></div>
+        <div class="tl" data-reveal>
           {jobs.map((j, i) => (
             <div class="job" id={`job-${i + 1}`} tabindex="-1" data-glow>
               <span class="edge-light" aria-hidden="true"></span>
@@ -155,8 +157,8 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
       </section>
 
       <section id="projects" tabindex="-1">
-        <div class="sh"><h2>Projects</h2><p>Selected work from my portfolio</p></div>
-        <div class="projects" data-swipe>
+        <div class="sh" data-blur><h2>Projects</h2><p>Selected work from my portfolio</p></div>
+        <div class="projects" data-swipe data-reveal>
           {projects.map((p, i) => (
             <div class="proj" id={`project-${i + 1}`} tabindex="-1" data-glow>
               <span class="edge-light" aria-hidden="true"></span>
@@ -180,8 +182,8 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
       </section>
 
       <section id="docs" tabindex="-1">
-        <div class="sh"><h2>Docs</h2><p>Available to download</p></div>
-        <div class="docs">
+        <div class="sh" data-blur><h2>Docs</h2><p>Available to download</p></div>
+        <div class="docs" data-reveal>
           {docs.map((d, i) => (
             <a class="doc" id={`doc-${i + 1}`} href="#docs" data-glow><span class="edge-light" aria-hidden="true"></span><div class="fi">PDF</div><div><b>{d.title}</b><small>{d.sub}</small></div><span class="dl">↓</span></a>
           ))}
@@ -189,8 +191,8 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
       </section>
 
       <section id="contact" tabindex="-1">
-        <div class="sh"><h2>Contact</h2><p>Get in touch</p></div>
-        <div class="contact">
+        <div class="sh" data-blur><h2>Contact</h2><p>Get in touch</p></div>
+        <div class="contact" data-reveal>
           {contacts.map((c) =>
             c.href ? (
               <a class="card" href={c.href} data-glow><span class="edge-light" aria-hidden="true"></span><span class="mono">{c.label}</span><b>{c.value}</b></a>
@@ -202,7 +204,7 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
       </section>
 
       <!-- MoHo 카드: 테두리 Border Glow -->
-      <a class="sib" href={moho.href} data-glow>
+      <a class="sib" href={moho.href} data-glow data-reveal>
         <span class="edge-light" aria-hidden="true"></span>
         <div><span class="mono">Sibling site</span><h3>{moho.title}</h3><p>{moho.text}</p></div>
         <div class="wm">MoHo →</div>
@@ -212,7 +214,7 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
     </main>
 
     <!-- 전체 검색: 헤더 Search 버튼 또는 ⌘K / Ctrl+K로 화면 가운데에 열림 (src/scripts/search.ts) -->
-    <dialog class="sk" id="search" aria-label="사이트 검색">
+    <dialog class="sk" id="search" aria-label="사이트 검색" data-lenis-prevent>
       <div class="sk-panel">
         <div class="sk-beam" data-beam="sk-field" data-active>
           <div class="sk-field">
@@ -240,6 +242,10 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
       import { initSearch } from '../scripts/search';
       import { initSwipe } from '../scripts/swipe';
       import { initBorderGlow } from '../scripts/border-glow';
+      import { initSmoothScroll } from '../scripts/smooth-scroll';
+      import { initEnter } from '../scripts/enter-effects';
+      initSmoothScroll();
+      initEnter();
       initHeader();
       initDotGrid();
       initSearch();

@@ -24,7 +24,7 @@ export function initDotGrid() {
   if (!host || !canvas || !ctx) return;
 
   const css = getComputedStyle(document.documentElement);
-  const base = rgb(css.getPropertyValue('--dim') || '#62646e');
+  const base = rgb(css.getPropertyValue('--dot') || '#62646e');
   const active = rgb(css.getPropertyValue('--accent') || '#2895f7');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

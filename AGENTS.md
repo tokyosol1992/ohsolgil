@@ -45,6 +45,9 @@
   - (PR #4 머지·배포 후 수정) 빛은 **테두리 전체를 360° 회전**(`size="md"`), 색은 메인 컬러 **#2895f7 파랑 베리에이션**(ocean 팔레트 치환, `staticColors`), **5초/바퀴**(헤더 검색 영역·검색창 동일). 세기는 global.css `.sk-beam[data-beam]`의 `--beam-stroke-opacity` 등으로 키움
   - 헤더 Search 영역 = **Resume 버튼과 같은 크기(108×40)**, 단축키 표시는 빼고 툴팁(`title`)으로. ≤900px는 40px 원 아이콘
   - 키보드 접근성(사용자 선택): **본문 바로가기**(`.skip`, Tab 첫 번째에 왼쪽 위 파란 pill로 나타남 → `main#top`으로 포커스) + **모바일 메뉴 포커스**(열면 첫 항목, Esc면 햄버거 버튼으로 복귀, Tab으로 메뉴 밖으로 나가면 닫힘, `header.ts`). 보류: 가로 스크롤 ←→ 조작, 프로젝트 카드 포커스(상세 페이지 생기면 해결)
+  - (2026-11-03) **Border Glow**(React Bits, MIT + Commons Clause): 모든 카드(핵심 역량·경력·프로젝트·문서·연락처·MoHo)에 `data-glow` + `<span class="edge-light">`. 마우스가 가장자리에 가까우면 그 방향 테두리가 파랗게 빛남. 원본 CSS를 `src/styles/border-glow.css`(색은 #2895f7 파랑 베리에이션으로 고정), 마우스 계산은 `src/scripts/border-glow.ts`. 프로젝트 카드는 바깥 빛이 잘리지 않게 `overflow:hidden`을 빼고 썸네일 위 모서리만 둥글게, 호버 시 파란 전체 테두리는 없앰
+  - (2026-11-03) **Soft Aurora**(React Bits, WebGL2): MoHo 카드 뒤 은은한 블루. 셰이더는 원본 그대로 `src/scripts/soft-aurora.ts`로 옮김(`data-aurora`에 JSON 옵션). 설정은 `index.astro`의 `aurora` 상수(spectrum 0·color #8fd0ff/#2895f7·bandHeight 0.12로 카드 아래쪽) + CSS `blur(14px)`. WebGL2가 없으면 아무것도 안 그림. 연락처 섹션 적용은 사용자 확인 후
+  - 히어로 개선 후보(사용자 검토 중): 히어로 뒤 큰 Soft Aurora(시안 스크린샷만, 코드 미반영) 등
 
 ## 다음 할 일
 1. 사용자에게 받아 채우기: 핵심 역량 3문장, 경력(회사·기간·직무·성과), 프로젝트 요약, 이메일·LinkedIn

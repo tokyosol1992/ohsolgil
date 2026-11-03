@@ -1,0 +1,128 @@
+/*
+ * Border Glow — React Bits "BorderGlow" (MIT + Commons Clause, Copyright (c) 2026 David Haz, https://github.com/DavidHDev/react-bits)
+ * 원본 CSS를 그대로 옮기고, 색은 메인 컬러 #2895f7 파랑 베리에이션으로 고정 (React 컴포넌트가 계산하던 변수를 미리 써 둠)
+ * 사이트 카드 모양(테두리·배경·그림자)은 global.css 것을 그대로 쓰도록 원본의 border·background·box-shadow는 뺐다.
+ * 마우스 위치는 src/scripts/border-glow.ts가 --edge-proximity·--cursor-angle로 넘겨줌
+ */
+[data-glow]{
+  --edge-proximity:0;
+  --cursor-angle:45deg;
+  --edge-sensitivity:30;
+  --color-sensitivity:calc(var(--edge-sensitivity) + 20);
+  --border-radius:18px;
+  --glow-padding:40px;
+  --cone-spread:25;
+  --fill-opacity:.5;
+  --card-bg:var(--surface);
+  --glow-color:hsl(208deg 95% 70% / 100%);
+  --glow-color-60:hsl(208deg 95% 70% / 60%);
+  --glow-color-50:hsl(208deg 95% 70% / 50%);
+  --glow-color-40:hsl(208deg 95% 70% / 40%);
+  --glow-color-30:hsl(208deg 95% 70% / 30%);
+  --glow-color-20:hsl(208deg 95% 70% / 20%);
+  --glow-color-10:hsl(208deg 95% 70% / 10%);
+  --gradient-one:radial-gradient(at 80% 55%, #2895f7 0px, transparent 50%);
+  --gradient-two:radial-gradient(at 69% 34%, #8fd0ff 0px, transparent 50%);
+  --gradient-three:radial-gradient(at 8% 6%, #1b63d6 0px, transparent 50%);
+  --gradient-four:radial-gradient(at 41% 38%, #2895f7 0px, transparent 50%);
+  --gradient-five:radial-gradient(at 86% 85%, #8fd0ff 0px, transparent 50%);
+  --gradient-six:radial-gradient(at 82% 18%, #1b63d6 0px, transparent 50%);
+  --gradient-seven:radial-gradient(at 51% 4%, #8fd0ff 0px, transparent 50%);
+  --gradient-base:linear-gradient(#2895f7 0 100%);
+  position:relative;
+  isolation:isolate;
+  border-radius:var(--border-radius);
+}
+
+[data-glow]::before,
+[data-glow]::after,
+[data-glow] > .edge-light{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  transition:opacity .25s ease-out;
+  z-index:-1;
+  pointer-events:none;
+}
+
+[data-glow]:not(:hover)::before,
+[data-glow]:not(:hover)::after,
+[data-glow]:not(:hover) > .edge-light{
+  opacity:0;
+  transition:opacity .75s ease-in-out;
+}
+
+/* 파란 메시 그라데이션 테두리 */
+[data-glow]::before{
+  border:1px solid transparent;
+  background:
+    linear-gradient(var(--card-bg) 0 100%) padding-box,
+    linear-gradient(rgb(255 255 255 / 0%) 0% 100%) border-box,
+    var(--gradient-one) border-box,
+    var(--gradient-two) border-box,
+    var(--gradient-three) border-box,
+    var(--gradient-four) border-box,
+    var(--gradient-five) border-box,
+    var(--gradient-six) border-box,
+    var(--gradient-seven) border-box,
+    var(--gradient-base) border-box;
+  opacity:calc((var(--edge-proximity) - var(--color-sensitivity)) / (100 - var(--color-sensitivity)));
+  -webkit-mask-image:conic-gradient(from var(--cursor-angle) at center, black calc(var(--cone-spread) * 1%), transparent calc((var(--cone-spread) + 15) * 1%), transparent calc((100 - var(--cone-spread) - 15) * 1%), black calc((100 - var(--cone-spread)) * 1%));
+  mask-image:conic-gradient(from var(--cursor-angle) at center, black calc(var(--cone-spread) * 1%), transparent calc((var(--cone-spread) + 15) * 1%), transparent calc((100 - var(--cone-spread) - 15) * 1%), black calc((100 - var(--cone-spread)) * 1%));
+}
+
+/* 가장자리 근처 안쪽 채움 */
+[data-glow]::after{
+  border:1px solid transparent;
+  background:
+    var(--gradient-one) padding-box,
+    var(--gradient-two) padding-box,
+    var(--gradient-three) padding-box,
+    var(--gradient-four) padding-box,
+    var(--gradient-five) padding-box,
+    var(--gradient-six) padding-box,
+    var(--gradient-seven) padding-box,
+    var(--gradient-base) padding-box;
+  mask-image:
+    linear-gradient(to bottom, black, black),
+    radial-gradient(ellipse at 50% 50%, black 40%, transparent 65%),
+    radial-gradient(ellipse at 66% 66%, black 5%, transparent 40%),
+    radial-gradient(ellipse at 33% 33%, black 5%, transparent 40%),
+    radial-gradient(ellipse at 66% 33%, black 5%, transparent 40%),
+    radial-gradient(ellipse at 33% 66%, black 5%, transparent 40%),
+    conic-gradient(from var(--cursor-angle) at center, transparent 5%, black 15%, black 85%, transparent 95%);
+  mask-composite:subtract, add, add, add, add, add;
+  opacity:calc(var(--fill-opacity) * (var(--edge-proximity) - var(--color-sensitivity)) / (100 - var(--color-sensitivity)));
+  mix-blend-mode:soft-light;
+}
+
+/* 바깥 번짐 */
+[data-glow] > .edge-light{
+  inset:calc(var(--glow-padding) * -1);
+  z-index:1;
+  -webkit-mask-image:conic-gradient(from var(--cursor-angle) at center, black 2.5%, transparent 10%, transparent 90%, black 97.5%);
+  mask-image:conic-gradient(from var(--cursor-angle) at center, black 2.5%, transparent 10%, transparent 90%, black 97.5%);
+  opacity:calc((var(--edge-proximity) - var(--edge-sensitivity)) / (100 - var(--edge-sensitivity)));
+  mix-blend-mode:plus-lighter;
+}
+[data-glow] > .edge-light::before{
+  content:"";
+  position:absolute;
+  inset:var(--glow-padding);
+  border-radius:inherit;
+  box-shadow:
+    inset 0 0 0 1px var(--glow-color),
+    inset 0 0 1px 0 var(--glow-color-60),
+    inset 0 0 3px 0 var(--glow-color-50),
+    inset 0 0 6px 0 var(--glow-color-40),
+    inset 0 0 15px 0 var(--glow-color-30),
+    inset 0 0 25px 2px var(--glow-color-20),
+    inset 0 0 50px 2px var(--glow-color-10),
+    0 0 1px 0 var(--glow-color-60),
+    0 0 3px 0 var(--glow-color-50),
+    0 0 6px 0 var(--glow-color-40),
+    0 0 15px 0 var(--glow-color-30),
+    0 0 25px 2px var(--glow-color-20),
+    0 0 50px 2px var(--glow-color-10);
+}

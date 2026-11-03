@@ -38,10 +38,12 @@
 
 - (2026-11-03) **사이트 점검 후 개선** (브랜치 `claude/keen-rubin-hxefhj`):
   - 흐린 회색 글자 `--dim` #62646e(대비 3.2:1) → **#80838f**(모든 배경 4.69:1 이상). 히어로 닷 그리드는 예전 색 `--dot`으로 분리
-  - **기간 표기 규칙**: 연차("8년 차") 금지, `YYYY - YYYY` / `YYYY.MM.DD`(범위는 ` - `). `src/lib/period.ts`의 `period(start, end)`가 형식 검사(틀리면 빌드 실패). 경력은 `jobs[].start/end`에 넣으면 표시, 비면 `YYYY.MM.DD - YYYY.MM.DD` 자리 표시. 재직 중(끝 날짜 없음) 표기는 사용자 결정 필요
+  - **기간 표기 규칙**: 연차("8년 차") 금지, `YYYY - YYYY` / `YYYY.MM.DD`(범위는 ` - `). `src/lib/period.ts`의 `period(start, end)`가 형식 검사(틀리면 빌드 실패). 경력은 `jobs[].start/end`에 넣으면 표시, 비면 `YYYY.MM.DD - YYYY.MM.DD` 자리 표시. **재직 중이면 `end: '현재'`** → `YYYY.MM.DD - 현재`
   - **모바일(≤720px) 프로젝트 가로 스크롤**(scroll-snap, 다음 카드가 화면 밖으로 살짝 보임) + 진행 막대·`03 / 08`(`src/scripts/swipe.ts`). 데스크톱은 그리드 그대로. 모바일 페이지 길이 6,681px → 4,139px
   - **전체 검색**: 헤더 Search 영역(≤900px는 아이콘) 클릭 또는 **⌘K / Ctrl+K** → 화면 가운데 `<dialog id="search">`(모바일은 위쪽). 색인은 `index.astro`가 페이지 데이터(섹션·프로젝트·경력·핵심 역량·문서·연락처·MoHo)로 자동 생성(`#sk-data`), `src/scripts/search.ts`가 검색(제목·영문 라벨·태그·키워드, **한글 초성** 지원, ↑↓·Enter·Esc, 결과로 이동 후 카드 반짝임·포커스 이동). 한글 입력 상태에서도 단축키가 되도록 `e.code === 'KeyK'` 확인
-  - 검색창 빛 효과 = 21st.dev **border-beam-search**(@larsen66) 레퍼런스. 원본은 React 패키지 `border-beam`(MIT)이라, 서버 렌더링 결과 CSS를 `src/styles/border-beam.css`로 옮겨 씀(React 미도입). 설정 `size="line"`·`colorful`·`duration 3.1`. 다시 만드는 법은 파일 머리 주석. 모션 줄이기면 효과 꺼짐
+  - 검색창 빛 효과 = 21st.dev **border-beam-search**(@larsen66) 레퍼런스. 원본은 React 패키지 `border-beam`(MIT)이라, 서버 렌더링 결과 CSS를 `src/styles/border-beam.css`로 옮겨 씀(React 미도입). 다시 만드는 법은 파일 머리 주석. 모션 줄이기면 효과 꺼짐
+  - (PR #4 머지·배포 후 수정) 빛은 **테두리 전체를 360° 회전**(`size="md"`), 색은 메인 컬러 **#2895f7 파랑 베리에이션**(ocean 팔레트 치환, `staticColors`), **5초/바퀴**(헤더 검색 영역·검색창 동일). 세기는 global.css `.sk-beam[data-beam]`의 `--beam-stroke-opacity` 등으로 키움
+  - 헤더 Search 영역 = **Resume 버튼과 같은 크기(108×40)**, 단축키 표시는 빼고 툴팁(`title`)으로. ≤900px는 40px 원 아이콘
   - 키보드 접근성(사용자 선택): **본문 바로가기**(`.skip`, Tab 첫 번째에 왼쪽 위 파란 pill로 나타남 → `main#top`으로 포커스) + **모바일 메뉴 포커스**(열면 첫 항목, Esc면 햄버거 버튼으로 복귀, Tab으로 메뉴 밖으로 나가면 닫힘, `header.ts`). 보류: 가로 스크롤 ←→ 조작, 프로젝트 카드 포커스(상세 페이지 생기면 해결)
 
 ## 다음 할 일

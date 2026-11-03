@@ -54,6 +54,7 @@ export function initSearch() {
   // 단축키 표시: Mac·iOS는 ⌘, 그 외 Ctrl
   const isMac = /Mac|iPhone|iPad/.test((navigator as any).userAgentData?.platform || navigator.platform || navigator.userAgent);
   document.querySelectorAll('[data-sk-mod]').forEach((el) => (el.textContent = isMac ? '⌘' : 'Ctrl'));
+  document.querySelectorAll<HTMLElement>('[data-sk-title]').forEach((el) => (el.title = `검색 (${isMac ? '⌘' : 'Ctrl'} K)`));
 
   function render() {
     const raw = input!.value.trim();

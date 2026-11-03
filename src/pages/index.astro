@@ -54,6 +54,9 @@ const contacts = [
 // Soft Aurora 설정 (React Bits SoftAurora props와 같음). 은은한 블루: 무지개 끔(spectrum 0), 밝기·불투명도 낮춤
 const aurora = { color1: '#8fd0ff', color2: '#2895f7', spectrum: 0, brightness: 0.9, opacity: 0.75, speed: 0.35, scale: 0.9, noiseAmplitude: 0.8, bandHeight: 0.12, bandSpread: 0.6, mouseInfluence: 0.25 };
 
+// 히어로 오로라: 밝기는 많이 낮추고(brightness·opacity) 띠를 넓게(bandSpread 낮을수록 넓음, scale 낮을수록 굵게 휨) + CSS blur
+const heroAurora = { color1: '#8fd0ff', color2: '#2895f7', spectrum: 0, brightness: 0.7, opacity: 0.7, speed: 0.3, scale: 0.8, noiseAmplitude: 0.9, bandHeight: 0.55, bandSpread: 0.5, mouseInfluence: 0.3 };
+
 const moho = { title: 'MoHo', text: '디자인 팁, AI 프롬프트, 툴, 작업 기록을 모아 두는 라이브러리', href: 'https://tokyosol1992.github.io' };
 
 // ── 전체 검색 색인 (헤더 Search / ⌘K·Ctrl+K). 페이지 데이터에서 자동으로 만들어짐 ──
@@ -114,6 +117,8 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
 
     <main id="top" tabindex="-1">
       <div class="hero-full" data-dots-host>
+        <!-- 히어로 뒤 은은한 블루 오로라 (닷 그리드 아래) -->
+        <div class="hero-aurora" aria-hidden="true" data-aurora={JSON.stringify(heroAurora)}></div>
         <canvas class="dots" aria-hidden="true"></canvas>
       <div class="wrap hero">
         <span class="avail">프로젝트 · 협업 제안 환영</span>

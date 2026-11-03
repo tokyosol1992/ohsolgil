@@ -48,17 +48,32 @@ export function initHeader() {
   // 헤더 폭이 줄어드는 동안 메뉴 위치도 바뀌므로 전환 끝난 뒤 다시 맞춤
   header.querySelector('.bar')?.addEventListener('transitionend', moveIndicator);
 
-  function setMenu(open: boolean) {
+  // 모바일 메뉴 포커스: 열면 첫 항목으로, Esc·바깥 클릭으로 닫으면 햄버거 버튼으로 돌아옴
+  function setMenu(open: boolean, focus: 'menu' | 'button' | false = false) {
     if (!btn || !menu) return;
     btn.setAttribute('aria-expanded', String(open));
     btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
     menu.hidden = !open;
+    if (open && focus === 'menu') menu.querySelector<HTMLElement>('a')?.focus();
+    if (!open && focus === 'button') btn.focus();
   }
-  btn?.addEventListener('click', () => setMenu(btn.getAttribute('aria-expanded') !== 'true'));
+  const isOpen = () => btn?.getAttribute('aria-expanded') === 'true';
+  btn?.addEventListener('click', () => setMenu(!isOpen(), isOpen() ? false : 'menu'));
+  // 메뉴 항목을 누르면 그 섹션으로 이동 (포커스는 브라우저가 섹션으로 옮김)
   menu?.addEventListener('click', (e) => {
     if ((e.target as HTMLElement).closest('a')) setMenu(false);
   });
-  document.addEventListener('keydown', (e) => e.key === 'Escape' && setMenu(false));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen()) setMenu(false, menu?.contains(document.activeElement) ? 'button' : false);
+  });
+  // 메뉴 안에서 Tab으로 마지막 항목을 지나 밖으로 나가면 닫기
+  menu?.addEventListener('focusout', (e) => {
+    const next = e.relatedTarget as Node | null;
+    if (next && !header.contains(next)) setMenu(false);
+  });
+  document.addEventListener('click', (e) => {
+    if (!header.contains(e.target as Node)) setMenu(false);
+  });
   document.addEventListener('search:open', () => setMenu(false));
   document.addEventListener('click', (e) => {
     if (!header.contains(e.target as Node)) setMenu(false);

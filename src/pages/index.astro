@@ -79,6 +79,8 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" />
   </head>
   <body>
+    <!-- 키보드 사용자용: Tab을 처음 누르면 왼쪽 위에 나타남 (평소엔 안 보임) -->
+    <a class="skip" href="#top">본문으로 건너뛰기</a>
     <header id="site-header">
       <div class="bar">
         <div class="pill">
@@ -107,7 +109,7 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
       </div>
     </header>
 
-    <main id="top">
+    <main id="top" tabindex="-1">
       <div class="hero-full" data-dots-host>
         <canvas class="dots" aria-hidden="true"></canvas>
       <div class="wrap hero">

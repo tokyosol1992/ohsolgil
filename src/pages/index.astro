@@ -21,7 +21,7 @@ const about = [
   { n: '03', title: '키오스크 · 모바일 앱', text: '핵심 역량 문장이 들어갑니다.' },
 ];
 
-// start/end: 'YYYY' 또는 'YYYY.MM.DD'. 비어 있으면 자리 표시
+// start/end: 'YYYY' 또는 'YYYY.MM.DD', 재직 중이면 end: '현재'. 비어 있으면 자리 표시
 const jobs = [
   { start: '', end: '', company: '포웍스', team: '직무 · 팀', points: ['담당 업무와 성과가 들어갑니다.', '그로우 프로젝트 포함'] },
   { start: '', end: '', company: '회사 이름', team: '직무 · 팀', points: ['담당 업무와 성과가 들어갑니다.'] },
@@ -90,13 +90,12 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
             <span class="nav-ind" aria-hidden="true"></span>
             {menu.map((m) => <a href={`#${m.id}`} data-spy={m.id}>{m.label}</a>)}
           </nav>
-          <!-- 검색 영역: 21st.dev border-beam-search 레퍼런스 (빛이 아래 테두리를 따라 이동) -->
+          <!-- 검색 영역: Resume와 같은 크기. 테두리를 360° 도는 파란 빛(border-beam.css) -->
           <div class="sk-beam" data-beam="sk-bar" data-active>
-            <button class="sk-trigger" type="button" data-sk-open aria-haspopup="dialog" aria-controls="search" aria-keyshortcuts="Control+K Meta+K">
+            <button class="sk-trigger" type="button" data-sk-open aria-haspopup="dialog" aria-controls="search" aria-keyshortcuts="Control+K Meta+K" title="검색 (Ctrl K)" data-sk-title>
               <svg class="sk-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
               <span class="sk-label">Search</span>
-              <kbd class="sk-kbd" aria-hidden="true"><span data-sk-mod>Ctrl</span>K</kbd>
-              <span class="sr-only">검색 열기 (단축키 Ctrl 또는 ⌘ + K)</span>
+                <span class="sr-only">검색 열기 (단축키 Ctrl 또는 ⌘ + K)</span>
             </button>
             <div data-beam-bloom></div>
           </div>

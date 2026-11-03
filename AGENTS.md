@@ -48,6 +48,13 @@
   - (2026-11-03) **Border Glow**(React Bits, MIT + Commons Clause): 모든 카드(핵심 역량·경력·프로젝트·문서·연락처·MoHo)에 `data-glow` + `<span class="edge-light">`. 마우스가 가장자리에 가까우면 그 방향 테두리가 파랗게 빛남. 원본 CSS를 `src/styles/border-glow.css`(색은 #2895f7 파랑 베리에이션으로 고정), 마우스 계산은 `src/scripts/border-glow.ts`. 프로젝트 카드는 바깥 빛이 잘리지 않게 `overflow:hidden`을 빼고 썸네일 위 모서리만 둥글게, 호버 시 파란 전체 테두리는 없앰
   - ❌ (2026-11-03) **Soft Aurora 삭제**: 히어로 뒤·MoHo 카드 뒤에 넣었다가 배포 후 사용자 피드백("진짜 별로다")으로 전부 제거. Border Glow만 유지. 히어로·MoHo 카드 뒤 흐르는 빛(오로라류) 배경은 다시 제안하지 말 것
 
+- (2026-11-03) **MoHo 스크롤 인터랙션 이식** (브랜치 `claude/nifty-cori-t6lksb`, 사용자 요청 "MoHo 스크롤 인터랙션 포폴에 적용하자"):
+  - **Lenis 부드러운 스크롤**(`src/scripts/smooth-scroll.ts`, 의존성 `lenis` 추가): 같은 페이지 앵커(로고·메뉴·버튼·본문 바로가기)를 Lenis로 이동하고 섹션으로 포커스 이동. 섹션 `scroll-margin-top`은 Lenis가 반영. 검색창이 열리면 멈춤(`search:open` → stop, 대화상자 `close` → start). 검색 결과 이동은 `scrollToEl(el, 'center')`(모바일 가로 목록 안 카드면 목록도 옮김). 검색창은 `data-lenis-prevent`
+  - ⚠️ html 클래스 MutationObserver로 stop/start 하면 Lenis가 스스로 바꾸는 `lenis-stopped` 클래스 때문에 막 시작한 스크롤이 다시 멈춤 → 이벤트로 연결할 것
+  - **진입 효과**(`src/scripts/enter-effects.ts`, MoHo `enter-effects.ts`+`reveal.ts`와 같은 값): 섹션 머리말 `.sh[data-blur]` 제목 블러 텍스트(단어별 70ms, 부제는 0.25s 뒤) · `[data-reveal]` 블록 떠오름(24px, 0.9s, 화면 아래 15% 선에서 시작 — GSAP 대신 IntersectionObserver+CSS) · 히어로 숫자 카운트업(`2016 - 2025`는 2000부터, `8개`) · `[data-scroll-words]` 단어 점등은 붙일 문단이 없어 준비만(소개 문단을 받으면 붙이기)
+  - 숨김 클래스(`is-split`·`rv`)는 스크립트가 붙이므로 JS가 없거나 모션 줄이기면 처음부터 다 보임
+  - Border Glow 빛 레이어(`.edge-light`)가 카드 밖으로 나가 **모바일 페이지 폭이 413px로 넓어지던 버그** 수정: `main{overflow-x:clip}`
+
 ## 다음 할 일
 0. (2026-11-03) 히어로가 밋밋하다는 피드백은 아직 열려 있음(오로라 배경은 탈락). 방문 통계는 다음에
 1. 사용자에게 받아 채우기: 핵심 역량 3문장, 경력(회사·기간·직무·성과), 프로젝트 요약, 이메일·LinkedIn

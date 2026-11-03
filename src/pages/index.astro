@@ -1,14 +1,19 @@
 ---
 import '../styles/global.css';
+import '../styles/border-beam.css';
+import { period, PERIOD_PLACEHOLDER } from '../lib/period';
 
-// 헤더 메뉴 = 페이지의 대분류 섹션 (id와 동일). 스크롤 위치에 따라 현재 항목이 표시됨
+// 헤더 메뉴 = 페이지의 대분류 섹션 (id와 동일). 스크롤 위치에 따라 현재 항목이 표시됨. ko는 검색 키워드
 const menu = [
-  { id: 'about', label: 'About' },
-  { id: 'experience', label: 'Experience' },
-  { id: 'projects', label: 'Projects' },
-  { id: 'docs', label: 'Docs' },
-  { id: 'contact', label: 'Contact' },
+  { id: 'about', label: 'About', ko: '소개' },
+  { id: 'experience', label: 'Experience', ko: '경력' },
+  { id: 'projects', label: 'Projects', ko: '프로젝트' },
+  { id: 'docs', label: 'Docs', ko: '문서' },
+  { id: 'contact', label: 'Contact', ko: '연락처' },
 ];
+
+// 기간은 연차 대신 `YYYY - YYYY` / `YYYY.MM.DD` (src/lib/period.ts)
+const career = period('2016', '2025')!;
 
 const about = [
   { n: '01', title: '플랫폼 설계', text: '핵심 역량 문장이 들어갑니다. (직접 정리해 주시는 내용으로 채웁니다)' },
@@ -16,10 +21,11 @@ const about = [
   { n: '03', title: '키오스크 · 모바일 앱', text: '핵심 역량 문장이 들어갑니다.' },
 ];
 
+// start/end: 'YYYY' 또는 'YYYY.MM.DD'. 비어 있으면 자리 표시
 const jobs = [
-  { when: '기간 입력 예정', company: '포웍스', team: '직무 · 팀', points: ['담당 업무와 성과가 들어갑니다.', '그로우 프로젝트 포함'] },
-  { when: '기간 입력 예정', company: '회사 이름', team: '직무 · 팀', points: ['담당 업무와 성과가 들어갑니다.'] },
-];
+  { start: '', end: '', company: '포웍스', team: '직무 · 팀', points: ['담당 업무와 성과가 들어갑니다.', '그로우 프로젝트 포함'] },
+  { start: '', end: '', company: '회사 이름', team: '직무 · 팀', points: ['담당 업무와 성과가 들어갑니다.'] },
+].map((j) => ({ ...j, when: period(j.start, j.end) }));
 
 // 이름은 Figma 포트폴리오 표지 기준. 요약·태그는 받은 내용만 채울 것.
 const projects = [
@@ -31,12 +37,34 @@ const projects = [
   { name: '해피오더', label: 'HAPPY ORDER', tags: [] },
   { name: '해피포인트', label: 'HAPPY POINT', tags: [] },
   { name: '배스킨 키오스크', label: 'BASKIN KIOSK', tags: ['키오스크'] },
-];
+] as { name: string; label: string; summary?: string; tags: string[] }[];
 
 const docs = [
-  { title: '포트폴리오', sub: 'A Bit Nerdy · 2016–2025' },
+  { title: '포트폴리오', sub: `A Bit Nerdy · ${career}` },
   { title: '이력서', sub: '파일 준비되면 연결' },
 ];
+
+const contacts = [
+  { label: 'Email', value: '', href: '' },
+  { label: 'GitHub', value: 'github.com/tokyosol1992', href: 'https://github.com/tokyosol1992' },
+  { label: 'LinkedIn', value: '', href: '' },
+];
+
+const moho = { title: 'MoHo', text: '디자인 팁, AI 프롬프트, 툴, 작업 기록을 모아 두는 라이브러리', href: 'https://tokyosol1992.github.io' };
+
+// ── 전체 검색 색인 (헤더 Search / ⌘K·Ctrl+K). 페이지 데이터에서 자동으로 만들어짐 ──
+// g: 그룹, t: 제목, s: 보조 문구, k: 추가 키워드, h: 이동할 곳(#id 또는 외부 주소)
+type Hit = { g: string; t: string; s?: string; k?: string; h: string };
+const searchIndex: Hit[] = [
+  ...menu.map((m) => ({ g: '섹션', t: m.label, s: m.ko, k: m.ko, h: `#${m.id}` })),
+  ...projects.map((p, i) => ({ g: '프로젝트', t: p.name, s: p.label, k: [p.label, ...p.tags, p.summary ?? ''].join(' '), h: `#project-${i + 1}` })),
+  ...jobs.map((j, i) => ({ g: '경력', t: j.company, s: j.when ?? j.team, k: j.points.join(' '), h: `#job-${i + 1}` })),
+  ...about.map((a) => ({ g: '핵심 역량', t: a.title, s: 'About', h: `#about-${a.n}` })),
+  ...docs.map((d, i) => ({ g: '문서', t: d.title, s: d.sub, k: 'PDF 이력서 resume portfolio 다운로드', h: `#doc-${i + 1}` })),
+  ...contacts.map((c) => ({ g: '연락처', t: c.label, s: c.value || 'Contact', k: '연락 메일 contact', h: c.href || '#contact' })),
+  { g: '링크', t: moho.title, s: '형제 사이트 · 디자인 라이브러리', k: '모호 블로그 팁 AI 프롬프트 툴 기록 library', h: moho.href },
+];
+const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
 ---
 <!doctype html>
 <html lang="ko">
@@ -44,7 +72,7 @@ const docs = [
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#09090b" />
-    <meta name="description" content="플랫폼과 디자인 시스템을 만드는 8년 차 프로덕트 디자이너 Oh SolGil의 포트폴리오" />
+    <meta name="description" content={`플랫폼과 디자인 시스템을 만드는 프로덕트 디자이너 Oh SolGil의 포트폴리오 (${career})`} />
     <title>Oh SolGil — Product Designer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -60,6 +88,16 @@ const docs = [
             <span class="nav-ind" aria-hidden="true"></span>
             {menu.map((m) => <a href={`#${m.id}`} data-spy={m.id}>{m.label}</a>)}
           </nav>
+          <!-- 검색 영역: 21st.dev border-beam-search 레퍼런스 (빛이 아래 테두리를 따라 이동) -->
+          <div class="sk-beam" data-beam="sk-bar" data-active>
+            <button class="sk-trigger" type="button" data-sk-open aria-haspopup="dialog" aria-controls="search" aria-keyshortcuts="Control+K Meta+K">
+              <svg class="sk-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+              <span class="sk-label">Search</span>
+              <kbd class="sk-kbd" aria-hidden="true"><span data-sk-mod>Ctrl</span>K</kbd>
+              <span class="sr-only">검색 열기 (단축키 Ctrl 또는 ⌘ + K)</span>
+            </button>
+            <div data-beam-bloom></div>
+          </div>
           <a class="btn primary" href="#docs">Resume</a>
           <button class="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
         </div>
@@ -76,33 +114,33 @@ const docs = [
         <span class="avail">프로젝트 · 협업 제안 환영</span>
         <h1>Oh SolGil</h1>
         <div class="role">Product Designer</div>
-        <p class="lead">플랫폼과 디자인 시스템을 만드는 8년 차 프로덕트 디자이너입니다.</p>
+        <p class="lead">플랫폼과 디자인 시스템을 만드는 프로덕트 디자이너입니다.</p>
         <div class="cta">
           <a class="btn primary" href="#docs">포트폴리오 PDF 받기</a>
           <a class="btn" href="#projects">프로젝트 보기</a>
         </div>
         <div class="facts">
-          <span><b>8년</b> 차</span><span><b>2016–2025</b> 작업 기록</span><span><b>{projects.length}개</b> 대표 프로젝트</span><span>서울</span>
+          <span><b>{career}</b> 작업 기록</span><span><b>{projects.length}개</b> 대표 프로젝트</span><span>서울</span>
         </div>
       </div>
       </div>
 
       <div class="wrap">
-      <section id="about">
+      <section id="about" tabindex="-1">
         <div class="sh"><h2>About</h2><p>What I do well and how I work</p></div>
         <div class="grid3">
           {about.map((a) => (
-            <div class="card"><div class="ic">{a.n}</div><h3>{a.title}</h3><p class="ph">{a.text}</p></div>
+            <div class="card" id={`about-${a.n}`} tabindex="-1"><div class="ic">{a.n}</div><h3>{a.title}</h3><p class="ph">{a.text}</p></div>
           ))}
         </div>
       </section>
 
-      <section id="experience">
-        <div class="sh"><h2>Experience</h2><p>2016 → 2025</p></div>
+      <section id="experience" tabindex="-1">
+        <div class="sh"><h2>Experience</h2><p>{career}</p></div>
         <div class="tl">
-          {jobs.map((j) => (
-            <div class="job">
-              <div class="when">{j.when}</div>
+          {jobs.map((j, i) => (
+            <div class="job" id={`job-${i + 1}`} tabindex="-1">
+              <div class:list={['when', { ph: !j.when }]}>{j.when ?? PERIOD_PLACEHOLDER}</div>
               <div>
                 <h3>{j.company}</h3>
                 <div class="team ph">{j.team}</div>
@@ -113,11 +151,11 @@ const docs = [
         </div>
       </section>
 
-      <section id="projects">
+      <section id="projects" tabindex="-1">
         <div class="sh"><h2>Projects</h2><p>Selected work from my portfolio</p></div>
-        <div class="projects">
-          {projects.map((p) => (
-            <div class="proj">
+        <div class="projects" data-swipe>
+          {projects.map((p, i) => (
+            <div class="proj" id={`project-${i + 1}`} tabindex="-1">
               <div class="thumb">{p.label}</div>
               <div class="pb">
                 <h3>{p.name}</h3>
@@ -130,38 +168,75 @@ const docs = [
             </div>
           ))}
         </div>
+        <!-- 모바일(≤720px)에서만 보임: 가로 스크롤 진행 표시 -->
+        <div class="swipe-meta" aria-hidden="true">
+          <span class="swipe-bar"><i data-swipe-bar></i></span>
+          <span class="swipe-count"><b data-swipe-now>01</b> / {String(projects.length).padStart(2, '0')}</span>
+        </div>
       </section>
 
-      <section id="docs">
+      <section id="docs" tabindex="-1">
         <div class="sh"><h2>Docs</h2><p>Available to download</p></div>
         <div class="docs">
-          {docs.map((d) => (
-            <a class="doc" href="#docs"><div class="fi">PDF</div><div><b>{d.title}</b><small>{d.sub}</small></div><span class="dl">↓</span></a>
+          {docs.map((d, i) => (
+            <a class="doc" id={`doc-${i + 1}`} href="#docs"><div class="fi">PDF</div><div><b>{d.title}</b><small>{d.sub}</small></div><span class="dl">↓</span></a>
           ))}
         </div>
       </section>
 
-      <section id="contact">
+      <section id="contact" tabindex="-1">
         <div class="sh"><h2>Contact</h2><p>Get in touch</p></div>
         <div class="contact">
-          <div class="card"><span class="mono">Email</span><b class="ph">이메일 입력 예정</b></div>
-          <a class="card" href="https://github.com/tokyosol1992"><span class="mono">GitHub</span><b>github.com/tokyosol1992</b></a>
-          <div class="card"><span class="mono">LinkedIn</span><b class="ph">링크 입력 예정</b></div>
+          {contacts.map((c) =>
+            c.href ? (
+              <a class="card" href={c.href}><span class="mono">{c.label}</span><b>{c.value}</b></a>
+            ) : (
+              <div class="card"><span class="mono">{c.label}</span><b class="ph">{c.label === 'Email' ? '이메일 입력 예정' : '링크 입력 예정'}</b></div>
+            ),
+          )}
         </div>
       </section>
 
-      <a class="sib" href="https://tokyosol1992.github.io">
-        <div><span class="mono">Sibling site</span><h3>MoHo</h3><p>디자인 팁, AI 프롬프트, 툴, 작업 기록을 모아 두는 라이브러리</p></div>
+      <a class="sib" href={moho.href}>
+        <div><span class="mono">Sibling site</span><h3>{moho.title}</h3><p>{moho.text}</p></div>
         <div class="wm">MoHo →</div>
       </a>
       <footer><span>© 2026 Oh SolGil</span><span>Seoul</span></footer>
       </div>
     </main>
+
+    <!-- 전체 검색: 헤더 Search 버튼 또는 ⌘K / Ctrl+K로 화면 가운데에 열림 (src/scripts/search.ts) -->
+    <dialog class="sk" id="search" aria-label="사이트 검색">
+      <div class="sk-panel">
+        <div class="sk-beam" data-beam="sk-field" data-active>
+          <div class="sk-field">
+            <svg class="sk-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+            <input id="sk-input" type="text" placeholder="프로젝트, 경력, 문서 검색" autocomplete="off" spellcheck="false" enterkeyhint="go"
+              role="combobox" aria-expanded="true" aria-controls="sk-list" aria-autocomplete="list" aria-label="검색어" />
+            <button class="sk-close" type="button" data-sk-close><span class="d" aria-hidden="true">ESC</span><span class="m" aria-hidden="true">닫기</span><span class="sr-only">검색 닫기</span></button>
+          </div>
+          <div data-beam-bloom></div>
+        </div>
+        <div class="sk-list" id="sk-list" role="listbox" aria-label="검색 결과"></div>
+        <div class="sk-foot">
+          <span class="keys"><kbd>↑</kbd><kbd>↓</kbd> 이동</span>
+          <span class="keys"><kbd>↵</kbd> 열기</span>
+          <span class="keys"><kbd>esc</kbd> 닫기</span>
+          <span class="sk-count" aria-live="polite"></span>
+        </div>
+      </div>
+    </dialog>
+    <script type="application/json" id="sk-data" set:html={searchJson} />
+
     <script>
       import { initHeader } from '../scripts/header';
       import { initDotGrid } from '../scripts/dot-grid';
+      import { initSearch } from '../scripts/search';
+      import { initSwipe } from '../scripts/swipe';
       initHeader();
       initDotGrid();
+      initSearch();
+      initSwipe();
     </script>
   </body>
 </html>

@@ -59,6 +59,7 @@ export function initHeader() {
     if ((e.target as HTMLElement).closest('a')) setMenu(false);
   });
   document.addEventListener('keydown', (e) => e.key === 'Escape' && setMenu(false));
+  document.addEventListener('search:open', () => setMenu(false));
   document.addEventListener('click', (e) => {
     if (!header.contains(e.target as Node)) setMenu(false);
   });

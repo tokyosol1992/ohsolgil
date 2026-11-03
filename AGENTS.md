@@ -36,6 +36,14 @@
 - MoHo 푸터·홈 Contact에 이 사이트 링크 추가·배포됨(MoHo 저장소 PR #14). 히어로 한글 문구·버튼은 사용자 결정으로 **한글 유지**(헤더·섹션 제목·부제만 영어)
 - 날짜별 작업 기록은 `HISTORY.md` 참고
 
+- (2026-11-03) **사이트 점검 후 개선** (브랜치 `claude/keen-rubin-hxefhj`):
+  - 흐린 회색 글자 `--dim` #62646e(대비 3.2:1) → **#80838f**(모든 배경 4.69:1 이상). 히어로 닷 그리드는 예전 색 `--dot`으로 분리
+  - **기간 표기 규칙**: 연차("8년 차") 금지, `YYYY - YYYY` / `YYYY.MM.DD`(범위는 ` - `). `src/lib/period.ts`의 `period(start, end)`가 형식 검사(틀리면 빌드 실패). 경력은 `jobs[].start/end`에 넣으면 표시, 비면 `YYYY.MM.DD - YYYY.MM.DD` 자리 표시. 재직 중(끝 날짜 없음) 표기는 사용자 결정 필요
+  - **모바일(≤720px) 프로젝트 가로 스크롤**(scroll-snap, 다음 카드가 화면 밖으로 살짝 보임) + 진행 막대·`03 / 08`(`src/scripts/swipe.ts`). 데스크톱은 그리드 그대로. 모바일 페이지 길이 6,681px → 4,139px
+  - **전체 검색**: 헤더 Search 영역(≤900px는 아이콘) 클릭 또는 **⌘K / Ctrl+K** → 화면 가운데 `<dialog id="search">`(모바일은 위쪽). 색인은 `index.astro`가 페이지 데이터(섹션·프로젝트·경력·핵심 역량·문서·연락처·MoHo)로 자동 생성(`#sk-data`), `src/scripts/search.ts`가 검색(제목·영문 라벨·태그·키워드, **한글 초성** 지원, ↑↓·Enter·Esc, 결과로 이동 후 카드 반짝임·포커스 이동). 한글 입력 상태에서도 단축키가 되도록 `e.code === 'KeyK'` 확인
+  - 검색창 빛 효과 = 21st.dev **border-beam-search**(@larsen66) 레퍼런스. 원본은 React 패키지 `border-beam`(MIT)이라, 서버 렌더링 결과 CSS를 `src/styles/border-beam.css`로 옮겨 씀(React 미도입). 설정 `size="line"`·`colorful`·`duration 3.1`. 다시 만드는 법은 파일 머리 주석. 모션 줄이기면 효과 꺼짐
+  - 키보드 접근성 보강(본문 바로가기 등)은 사용자 검토 대기
+
 ## 다음 할 일
 1. 사용자에게 받아 채우기: 핵심 역량 3문장, 경력(회사·기간·직무·성과), 프로젝트 요약, 이메일·LinkedIn
 2. 포트폴리오·이력서 PDF를 `public/`에 넣고 문서 버튼 연결

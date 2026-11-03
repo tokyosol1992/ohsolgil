@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import '../styles/border-beam.css';
+import '../styles/border-glow.css';
 import { period, PERIOD_PLACEHOLDER } from '../lib/period';
 
 // 헤더 메뉴 = 페이지의 대분류 섹션 (id와 동일). 스크롤 위치에 따라 현재 항목이 표시됨. ko는 검색 키워드
@@ -49,6 +50,12 @@ const contacts = [
   { label: 'GitHub', value: 'github.com/tokyosol1992', href: 'https://github.com/tokyosol1992' },
   { label: 'LinkedIn', value: '', href: '' },
 ];
+
+// Soft Aurora 설정 (React Bits SoftAurora props와 같음). 은은한 블루: 무지개 끔(spectrum 0), 밝기·불투명도 낮춤
+const aurora = { color1: '#8fd0ff', color2: '#2895f7', spectrum: 0, brightness: 0.9, opacity: 0.75, speed: 0.35, scale: 0.9, noiseAmplitude: 0.8, bandHeight: 0.12, bandSpread: 0.6, mouseInfluence: 0.25 };
+
+// 히어로 오로라: 밝기는 많이 낮추고(brightness·opacity) 띠를 넓게(bandSpread 낮을수록 넓음, scale 낮을수록 굵게 휨) + CSS blur
+const heroAurora = { color1: '#8fd0ff', color2: '#2895f7', spectrum: 0, brightness: 0.7, opacity: 0.7, speed: 0.3, scale: 0.8, noiseAmplitude: 0.9, bandHeight: 0.55, bandSpread: 0.5, mouseInfluence: 0.3 };
 
 const moho = { title: 'MoHo', text: '디자인 팁, AI 프롬프트, 툴, 작업 기록을 모아 두는 라이브러리', href: 'https://tokyosol1992.github.io' };
 
@@ -110,6 +117,8 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
 
     <main id="top" tabindex="-1">
       <div class="hero-full" data-dots-host>
+        <!-- 히어로 뒤 은은한 블루 오로라 (닷 그리드 아래) -->
+        <div class="hero-aurora" aria-hidden="true" data-aurora={JSON.stringify(heroAurora)}></div>
         <canvas class="dots" aria-hidden="true"></canvas>
       <div class="wrap hero">
         <span class="avail">프로젝트 · 협업 제안 환영</span>
@@ -131,7 +140,7 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
         <div class="sh"><h2>About</h2><p>What I do well and how I work</p></div>
         <div class="grid3">
           {about.map((a) => (
-            <div class="card" id={`about-${a.n}`} tabindex="-1"><div class="ic">{a.n}</div><h3>{a.title}</h3><p class="ph">{a.text}</p></div>
+            <div class="card" id={`about-${a.n}`} tabindex="-1" data-glow><span class="edge-light" aria-hidden="true"></span><div class="ic">{a.n}</div><h3>{a.title}</h3><p class="ph">{a.text}</p></div>
           ))}
         </div>
       </section>
@@ -140,7 +149,8 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
         <div class="sh"><h2>Experience</h2><p>{career}</p></div>
         <div class="tl">
           {jobs.map((j, i) => (
-            <div class="job" id={`job-${i + 1}`} tabindex="-1">
+            <div class="job" id={`job-${i + 1}`} tabindex="-1" data-glow>
+              <span class="edge-light" aria-hidden="true"></span>
               <div class:list={['when', { ph: !j.when }]}>{j.when ?? PERIOD_PLACEHOLDER}</div>
               <div>
                 <h3>{j.company}</h3>
@@ -156,7 +166,8 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
         <div class="sh"><h2>Projects</h2><p>Selected work from my portfolio</p></div>
         <div class="projects" data-swipe>
           {projects.map((p, i) => (
-            <div class="proj" id={`project-${i + 1}`} tabindex="-1">
+            <div class="proj" id={`project-${i + 1}`} tabindex="-1" data-glow>
+              <span class="edge-light" aria-hidden="true"></span>
               <div class="thumb">{p.label}</div>
               <div class="pb">
                 <h3>{p.name}</h3>
@@ -180,7 +191,7 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
         <div class="sh"><h2>Docs</h2><p>Available to download</p></div>
         <div class="docs">
           {docs.map((d, i) => (
-            <a class="doc" id={`doc-${i + 1}`} href="#docs"><div class="fi">PDF</div><div><b>{d.title}</b><small>{d.sub}</small></div><span class="dl">↓</span></a>
+            <a class="doc" id={`doc-${i + 1}`} href="#docs" data-glow><span class="edge-light" aria-hidden="true"></span><div class="fi">PDF</div><div><b>{d.title}</b><small>{d.sub}</small></div><span class="dl">↓</span></a>
           ))}
         </div>
       </section>
@@ -190,15 +201,18 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
         <div class="contact">
           {contacts.map((c) =>
             c.href ? (
-              <a class="card" href={c.href}><span class="mono">{c.label}</span><b>{c.value}</b></a>
+              <a class="card" href={c.href} data-glow><span class="edge-light" aria-hidden="true"></span><span class="mono">{c.label}</span><b>{c.value}</b></a>
             ) : (
-              <div class="card"><span class="mono">{c.label}</span><b class="ph">{c.label === 'Email' ? '이메일 입력 예정' : '링크 입력 예정'}</b></div>
+              <div class="card" data-glow><span class="edge-light" aria-hidden="true"></span><span class="mono">{c.label}</span><b class="ph">{c.label === 'Email' ? '이메일 입력 예정' : '링크 입력 예정'}</b></div>
             ),
           )}
         </div>
       </section>
 
-      <a class="sib" href={moho.href}>
+      <!-- MoHo 카드: 뒤에 은은한 블루 Soft Aurora + 테두리 Border Glow -->
+      <a class="sib" href={moho.href} data-glow>
+        <span class="edge-light" aria-hidden="true"></span>
+        <div class="sib-aurora" aria-hidden="true" data-aurora={JSON.stringify(aurora)}></div>
         <div><span class="mono">Sibling site</span><h3>{moho.title}</h3><p>{moho.text}</p></div>
         <div class="wm">MoHo →</div>
       </a>
@@ -234,10 +248,14 @@ const searchJson = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
       import { initDotGrid } from '../scripts/dot-grid';
       import { initSearch } from '../scripts/search';
       import { initSwipe } from '../scripts/swipe';
+      import { initBorderGlow } from '../scripts/border-glow';
+      import { initSoftAurora } from '../scripts/soft-aurora';
       initHeader();
       initDotGrid();
       initSearch();
       initSwipe();
+      initBorderGlow();
+      initSoftAurora();
     </script>
   </body>
 </html>

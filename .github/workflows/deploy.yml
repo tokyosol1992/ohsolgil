@@ -1,38 +1,25 @@
-name: Deploy to GitHub Pages
-
+name: Preserve legacy portfolio URL
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
   pages: write
   id-token: write
-
 concurrency:
   group: pages
   cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version-file: .nvmrc
-      - id: pages
-        uses: actions/configure-pages@v5
-      - run: npm install
-      - run: npm run build
-        env:
-          SITE: ${{ steps.pages.outputs.origin }}
-          BASE: ${{ steps.pages.outputs.base_path }}
+      - uses: actions/configure-pages@v5
+      - run: python3 scripts/prepare-redirect.py --verify-target
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
-
+          path: dist-redirect
   deploy:
     needs: build
     runs-on: ubuntu-latest
